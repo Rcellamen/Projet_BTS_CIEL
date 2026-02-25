@@ -1,5 +1,4 @@
-from flask import Flask
-from run import db
+from db import db
 
 
 class Badge(db.Model):
@@ -7,7 +6,7 @@ class Badge(db.Model):
     
     id_badge = db.Column(db.Integer, unique=True, primary_key=True, nullable=False)
     val_badge = db.Column(db.Integer, unique=False, nullable=True)
-    id_utilisateur = db.Column(db.Integer, db.ForeignKey('utilisateur.id'), nullable=False)  
+    id_utilisateur = db.Column(db.Integer, db.ForeignKey('utilisateur.id'))  
     der_connexion = db.Column(db.DateTime, unique=False)
     date_ajout = db.Column(db.Integer, nullable=False)  
 
