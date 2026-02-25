@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 from mfrc522 import SimpleMFRC522
 import time
 
-def Lire_Badge(choix):
+def Lire_Badge(lecture_continue=False):
     """
     Reads RFID badge information continuously until interrupted.
     This function initializes an RFID reader and enters a loop where it waits for
@@ -20,20 +20,25 @@ def Lire_Badge(choix):
         - Cleans up GPIO resources properly on exit
         - Prints detected badge IDs to console
     """
-    
+
     # Initialisation du lecteur
     reader = SimpleMFRC522()
+    id = -1
+    text = "Error"
+    
     try:   
-        while choix:
-            # Le programme attend ici qu'un badge soit posé
+        if lecture_continue:
+            # Mode Boucle (non utilisé par votre API Flask actuellement)
+            while True:
+                id, text = reader.read()
+                print(f"Badge détecté en boucle ! ID: {id}")
+                time.sleep(1)
+        else:
+            # Mode API (Lecture unique) : le code attend ici qu'un badge soit posé
+            print("En attente d'un badge...")
             id, text = reader.read()
-
-            # Affichage du résultat
             print(f"Badge détecté ! ID: {id}")
             
-            # Petite pause de 1 seconde pour éviter d'afficher le même badge
-            # 10 fois de suite si on le laisse posé
-            time.sleep(1)
     except KeyboardInterrupt:
         pass
 
