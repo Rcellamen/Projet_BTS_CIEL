@@ -5,9 +5,13 @@ from run import db
 class Badge(db.Model):
     __tablename__ = 'badge'
     
-    id_badge = db.Column(db.Integer, primary_key=True)
-    id_utilisateur = db.Column(db.Integer, db.ForeignKey('utilisateur.id'), nullable=False)
-    der_connexion = db.Column(db.DateTime, unique=False, nullable=False)
+    id_badge = db.Column(db.Integer, unique=True, primary_key=True, nullable=False)
+    val_badge = db.Column(db.Integer, unique=False, nullable=True)
+    id_utilisateur = db.Column(db.Integer, db.ForeignKey('utilisateur.id'), nullable=False)  
+    der_connexion = db.Column(db.DateTime, unique=False)
+    date_ajout = db.Column(db.Integer, nullable=False)  
+
+
 
     def __repr__(self):
         return f'<Badge {self.id_badge}>'
