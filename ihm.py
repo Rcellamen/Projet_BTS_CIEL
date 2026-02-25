@@ -31,9 +31,6 @@ class App(tkinter.Tk):
         right.pack(side="left", fill="both", expand=True)
 
         tkinter.Label(left, text="Navigation").pack(pady=5)
-        for i in range(1,5):
-            btn = tkinter.Button(left, text=f"Option {i}", command=lambda i=i: self.on_nav(i))
-            btn.pack(fill="x", padx=5, pady=2)
 
         def on_api_response():
             response = send_request(ip="172.20.10.2", port=5000, endpoint="/ajouter_une_carte")
