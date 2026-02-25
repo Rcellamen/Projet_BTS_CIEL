@@ -1,6 +1,15 @@
+from customtkinter import * 
 import tkinter
+import requests
 
-
+def send_request(ip, port=80, endpoint="/"):
+    try:
+        url = f"http://{ip}:{port}{endpoint}"
+        response = requests.get(url, timeout=5)
+        print(response, "test")
+        return response.text
+    except requests.exceptions.RequestException as e:
+        return f"Erreur: {str(e)}"
 class App(tkinter.Tk):
     def __init__(self):
         super().__init__()
@@ -25,6 +34,9 @@ class App(tkinter.Tk):
         for i in range(1,5):
             btn = tkinter.Button(left, text=f"Option {i}", command=lambda i=i: self.on_nav(i))
             btn.pack(fill="x", padx=5, pady=2)
+
+        buttontest = tkinter.Button(left, text="Test API", command=lambda: send_request(ip="172.20.10.5", port=5000, endpoint="/ajouter_une_carte"))
+        buttontest.pack(fill="x", padx=5, pady=2)
 
         tkinter.Label(right, text="Contenu").pack(anchor="nw")
         self.content = tkinter.Text(right)
