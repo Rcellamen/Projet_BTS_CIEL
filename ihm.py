@@ -35,7 +35,12 @@ class App(tkinter.Tk):
             btn = tkinter.Button(left, text=f"Option {i}", command=lambda i=i: self.on_nav(i))
             btn.pack(fill="x", padx=5, pady=2)
 
-        buttontest = tkinter.Button(left, text="Test API", command=lambda: send_request(ip="172.20.10.5", port=5000, endpoint="/ajouter_une_carte"))
+        def on_api_response():
+            response = send_request(ip="172.20.10.2", port=5000, endpoint="/ajouter_une_carte")
+            self.content.delete("1.0", "end")
+            self.content.insert("1.0", response)
+        
+        buttontest = tkinter.Button(left, text="Test API", command=on_api_response)
         buttontest.pack(fill="x", padx=5, pady=2)
 
         tkinter.Label(right, text="Contenu").pack(anchor="nw")
