@@ -1,15 +1,23 @@
-from customtkinter import * 
 import tkinter
 import requests
 
-def send_request(ip, port=80, endpoint="/"):
+def send_request(ip, port=80, endpoint="/", valeur={"erreur": "erreur"}):
     try:
-        url = f"http://{ip}:{port}{endpoint}"
-        response = requests.get(url, timeout=5)
-        print(response, "test")
-        return response.text
+        if valeur == {"erreur": "erreur"}: 
+            url = f"http://{ip}:{port}{endpoint}"
+            response = requests.get(url, timeout=5)
+            return response.text
+        else:
+            url = f"http://{ip}:{port}{endpoint}"
+            response = requests.post(url, timeout=5, json=valeur)
+            return response.text
+            
     except requests.exceptions.RequestException as e:
         return f"Erreur: {str(e)}"
+    
+
+
+
 class App(tkinter.Tk):
     def __init__(self):
         super().__init__()
@@ -20,13 +28,13 @@ class App(tkinter.Tk):
 
     def _create_widgets(self):
         header = tkinter.Label(self, text="Maquette système sûreté", font=("Arial", 18))
-        header.pack(pady=(0,10))
+        header.pack(pady=(0, 10))
 
         main_frame = tkinter.Frame(self)
         main_frame.pack(fill="both", expand=True)
 
         left = tkinter.Frame(main_frame, bd=1, relief="sunken", width=200)
-        left.pack(side="left", fill="y", padx=(0,10))
+        left.pack(side="left", fill="y", padx=(0, 10))
         right = tkinter.Frame(main_frame, bd=1, relief="sunken")
         right.pack(side="left", fill="both", expand=True)
 
@@ -36,21 +44,16 @@ class App(tkinter.Tk):
             response = send_request(ip="172.20.10.2", port=5000, endpoint="/ajouter_une_carte")
             self.content.delete("1.0", "end")
             self.content.insert("1.0", response)
-        
-        buttontest = tkinter.Button(left, text="Test API", command=on_api_response)
-        buttontest.pack(fill="x", padx=5, pady=2)
+
+        tkinter.Button(left, text="Test API", command=on_api_response).pack(fill="x", padx=5, pady=2)
 
         tkinter.Label(right, text="Contenu").pack(anchor="nw")
         self.content = tkinter.Text(right)
         self.content.pack(fill="both", expand=True, padx=5, pady=5)
 
         footer = tkinter.Frame(self)
-        footer.pack(fill="x", pady=(10,0))
+        footer.pack(fill="x", pady=(10, 0))
         tkinter.Button(footer, text="Quitter", command=self.quit).pack(side="right")
-
-    def on_nav(self, idx):
-        self.content.delete("1.0", "end")
-        self.content.insert("1.0", f"Contenu pour l'option {idx}")
 
 if __name__ == "__main__":
     app = App()
