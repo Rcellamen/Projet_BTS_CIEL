@@ -28,13 +28,13 @@ def Lire_Badge(lecture_continue=False):
     
     try:   
         if lecture_continue:
-            # Mode Boucle (non utilisé par votre API Flask actuellement)
+            # Mode Boucle
             while True:
                 id, text = reader.read()
                 print(f"Badge détecté en boucle ! ID: {id}")
                 time.sleep(1)
         else:
-            # Mode API (Lecture unique) : le code attend ici qu'un badge soit posé
+            # Mode API (Lecture unique)
             print("En attente d'un badge...")
             id, text = reader.read()
             print(f"Badge détecté ! ID: {id}")

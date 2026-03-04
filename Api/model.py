@@ -8,7 +8,7 @@ class Badge(db.Model):
     val_badge = db.Column(db.Integer, unique=False, nullable=True)
     id_utilisateur = db.Column(db.Integer, db.ForeignKey('utilisateur.id'))  
     der_connexion = db.Column(db.DateTime, unique=False)
-    date_ajout = db.Column(db.Integer, nullable=False)  
+    date_ajout = db.Column(db.DateTime, nullable=False)  
 
 
 
