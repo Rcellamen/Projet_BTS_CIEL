@@ -11,10 +11,26 @@ from flask import request
     #                       ROUTES CARTES
     # ────────────────────────────────────────────────────────────────────────
 
-@app.route("/ajouter_une_carte", methods=["POST"])
+@app.route("/ajouter_une_carte<id_badges>", methods=["POST"])
 def ajouter_une_carte():
     if not Badge.query.filter_by(id_badge=id).first():
         carte = Badge.query.filter_by(id_badge=id).first()
+        data = request.get_json()
+        if "id" in data:
+            carte.id_badges = data['id']
+
+        if "nom" in data:
+            carte.nom = data['nom']
+
+        if "prenom" in data:
+            carte.prenom = data['prenom']
+
+        if "badges" in data:
+            carte.badges = data['badges']
+
+        if "droits" in data:
+            carte.droits = data['droits']
+               
         db.session.add(carte)
         db.session.commit()
         # Retourne un dictionnaire propre
