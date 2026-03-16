@@ -20,9 +20,10 @@ class Utilisateur(db.Model):
     __tablename__ = 'utilisateur'
     
     id = db.Column(db.Integer, primary_key=True)
-    nom = db.Column(db.String(100), nullable=False)
-    prenom = db.Column(db.String(100), unique=False, nullable=False)
+    nom = db.Column(db.String(20), unique=False, nullable=False)
+    prenom = db.Column(db.String(20), unique=False, nullable=False)
     badges = db.relationship('Badge', backref='utilisateur', lazy=True)
-    
+    droits = db.Column(db.String(20),unique=False, nullable=False)
+
     def __repr__(self):
         return f'<Utilisateur {self.nom}>'
