@@ -11,11 +11,10 @@ from flask import request
     #                       ROUTES CARTES
     # ────────────────────────────────────────────────────────────────────────
 
-@app.route("/ajouter_une_carte", methods=["GET"])
+@app.route("/ajouter_une_carte", methods=["POST"])
 def ajouter_une_carte():
-    #id, text = Lire_Badge(False)
     if not Badge.query.filter_by(id_badge=id).first():
-        carte = Badge(id_badge=id, val_badge=text, date_ajout=datetime.now())
+        carte = Badge.query.filter_by(id_badge=id).first()
         db.session.add(carte)
         db.session.commit()
         # Retourne un dictionnaire propre
@@ -69,6 +68,35 @@ if __name__ == "__main__":
     # ────────────────────────────────────────────────────────────────────────
     #                       ROUTE UTILISATEUR
     # ────────────────────────────────────────────────────────────────────────
+
+
+@app.route("/ajouter_un_utilisateur/<id>", methods=["POST"])
+def ajouter_un_utilisateur():
+    if not Utilisateur.query.filter_by(id=id).first():
+        util = Utilisateur.query.filter_by(id=id).first()
+        data = request.get_json()
+        if "id" in data:
+            util.id = data['id']
+
+        if "nom" in data:
+            util.nom = data['nom']
+
+        if "prenom" in data:
+            util.prenom = data['prenom']
+
+        if "badges" in data:
+            util.badges = data['badges']
+
+        if "droits" in data:
+            util.droits = data['droits']
+
+        db.session.add(util)
+        db.session.commit()
+        # Retourne un dictionnaire propre
+        return {"Ajouté": "L'utilisateur a bien été ajouté"}, 201
+    return {"Erreur" : "L'utilisateur n'a pas pu être ajouté"}, 404
+
+
 @app.route("/modifier_un_utilisateur/<id>", methods=["GET", "POST"])
 def modifier_un_utilisateur(id):
     if  request.method == "GET":
@@ -91,6 +119,7 @@ def modifier_un_utilisateur(id):
 
     return {"error": "L'utilisateur n'existe pas"}, 404
 
+
 @app.route("/supprimer_un_utilisateur/<id>", methods=["GET"])
 def supprimer_un_utilisateur(id):
     util = Utilisateur.query.filter_by(id=id)
@@ -99,6 +128,7 @@ def supprimer_un_utilisateur(id):
         db.session.commit()
         return {"Effacé" : "L'utilisateur à bien été supprimé"}, 201
     return {"Erreur" : "Erreur"}, 404
+
 
 @app.route("/afficher_utilisateurs", methods=["GET"])
 def afficher_util():

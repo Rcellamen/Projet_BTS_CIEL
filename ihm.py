@@ -4,7 +4,7 @@ import requests
 import json
 
 # ════════════════════════════════════════════════════════════════════════════
-# CONFIGURATION
+#                           CONFIGURATION
 # ════════════════════════════════════════════════════════════════════════════
 
 IP = "172.20.10.5"
@@ -23,7 +23,7 @@ FONT_HEAD = ("Segoe UI", 13, "bold")
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# UTILITAIRES
+#                           UTILITAIRES
 # ════════════════════════════════════════════════════════════════════════════
 
 def send_request(ip, port=80, endpoint="/", valeur=None):
@@ -44,7 +44,7 @@ def send_request(ip, port=80, endpoint="/", valeur=None):
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# APPLICATION
+#                           APPLICATION
 # ════════════════════════════════════════════════════════════════════════════
 
 class App(tkinter.Tk):
@@ -52,7 +52,7 @@ class App(tkinter.Tk):
 
     def __init__(self):
         super().__init__()
-        self.title("Maquette Sûreté")
+        self.title("Maquette système Sûreté")
         self.geometry("900x580")
         self.minsize(700, 480)
         self.configure(bg=BG)
@@ -145,7 +145,7 @@ class App(tkinter.Tk):
             fill="x", padx=24, pady=(0, 12))
 
     # ────────────────────────────────────────────────────────────────────────
-    # DASHBOARD
+    #                           DASHBOARD
     # ────────────────────────────────────────────────────────────────────────
 
     def show_dashboard(self):
@@ -158,7 +158,7 @@ class App(tkinter.Tk):
                       bg=BG, fg=TEXT_DIM, font=FONT).pack(anchor="w", padx=24)
 
     # ────────────────────────────────────────────────────────────────────────
-    # GESTION DES CARTES
+    #                       GESTION DES CARTES
     # ────────────────────────────────────────────────────────────────────────
 
     def show_cards_tab(self):
@@ -177,21 +177,21 @@ class App(tkinter.Tk):
                        activebackground="#1d4ed8", activeforeground="white",
                        cursor="hand2").pack(side="left", padx=(0, 6))
 
-        self.btn_modify = tkinter.Button(toolbar, text="Modifier",
+        self.btn_modifier = tkinter.Button(toolbar, text="Modifier",
                                          command=self.modify_card,
                                          state="disabled", relief="flat", bd=0,
                                          bg=BG, fg=TEXT, padx=10, pady=5,
                                          font=FONT, cursor="hand2",
                                          activebackground=BORDER)
-        self.btn_modify.pack(side="left", padx=(0, 6))
+        self.btn_modifier.pack(side="left", padx=(0, 6))
 
-        self.btn_delete = tkinter.Button(toolbar, text="Supprimer",
+        self.btn_supprimer = tkinter.Button(toolbar, text="Supprimer",
                                          command=self.delete_card,
                                          state="disabled", relief="flat", bd=0,
                                          bg=BG, fg=DANGER, padx=10, pady=5,
                                          font=FONT, cursor="hand2",
                                          activebackground=BORDER)
-        self.btn_delete.pack(side="left")
+        self.btn_supprimer.pack(side="left")
 
         tkinter.Button(toolbar, text="Actualiser", command=self.load_cards,
                        bg=BG, fg=TEXT, relief="flat", bd=0,
@@ -228,10 +228,10 @@ class App(tkinter.Tk):
     def _on_card_select(self, event=None):
         """Active les boutons Modifier et Supprimer lorsqu'une carte est sélectionnée."""
         state = "normal" if self.cards_tree.selection() else "disabled"
-        self.btn_modify.configure(state=state)
-        self.btn_delete.configure(state=state)
+        self.btn_modifier.configure(state=state)
+        self.btn_supprimer.configure(state=state)
 
-    def load_cards(self):
+    def charger_carte(self):
         """Récupère la liste des cartes depuis le serveur et remplit le tableau."""
         response = send_request(ip=IP, port=5000, endpoint="/afficher_cartes")
         try:
@@ -249,7 +249,7 @@ class App(tkinter.Tk):
             messagebox.showerror("Erreur",
                                  f"Impossible de récupérer les cartes :\n{response}")
 
-    def add_card(self):
+    def ajouter_carte(self):
         """Ouvre le formulaire d'ajout d'une nouvelle carte."""
         def submit(data, win):
             res = send_request(ip=IP, port=5000,
@@ -262,7 +262,7 @@ class App(tkinter.Tk):
                     [("id", "ID Badge"), ("texte", "Texte"),
                      ("id_util", "ID Utilisateur")], submit)
 
-    def modify_card(self):
+    def modifier_carte(self):
         """Ouvre le formulaire de modification de la carte sélectionnée dans le tableau."""
         sel = self.cards_tree.selection()
         if not sel:
@@ -282,7 +282,7 @@ class App(tkinter.Tk):
                     [("id", "ID Badge"), ("texte", "Texte"),
                      ("id_util", "ID Utilisateur")], submit, prefill=prefill)
 
-    def delete_card(self):
+    def supprimer_carte(self):
         """Supprime la carte sélectionnée après confirmation de l'utilisateur."""
         sel = self.cards_tree.selection()
         if not sel:
@@ -296,7 +296,7 @@ class App(tkinter.Tk):
         self.load_cards()
 
     # ────────────────────────────────────────────────────────────────────────
-    # MODAL GÉNÉRIQUE
+    #                       MODAL GÉNÉRIQUE
     # ────────────────────────────────────────────────────────────────────────
 
     def _modal(self, title, fields, on_submit, prefill=None):
@@ -360,7 +360,7 @@ class App(tkinter.Tk):
         win.geometry(f"+{x}+{y}")
 
     # ────────────────────────────────────────────────────────────────────────
-    # UTILISATEURS
+    #                          UTILISATEURS
     # ────────────────────────────────────────────────────────────────────────
 
     def show_users_tab(self):
