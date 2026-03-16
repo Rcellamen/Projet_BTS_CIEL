@@ -1,10 +1,15 @@
 #from capteur import Lire_Badge
 from db import db
 from model import Badge
+from model import Utilisateur
 from datetime import datetime
 from config import app
 from flask import request
 
+
+    # ────────────────────────────────────────────────────────────────────────
+    #                       ROUTES CARTES
+    # ────────────────────────────────────────────────────────────────────────
 
 @app.route("/ajouter_une_carte", methods=["GET"])
 def ajouter_une_carte():
@@ -14,8 +19,8 @@ def ajouter_une_carte():
         db.session.add(carte)
         db.session.commit()
         # Retourne un dictionnaire propre
-        return {"id": id, "texte": text}, 201
-    return {"Erreur" : "Erreur"}, 404
+        return {"Ajouté": "La carte a bien été ajouté"}, 201
+    return {"Erreur" : "La carte n'a pas pu être ajouté"}, 404
 
 @app.route("/modifier_une_carte/<id_badge>", methods=["GET", "POST"])
 def modifier_une_carte(id_badge):
@@ -37,7 +42,7 @@ def modifier_une_carte(id_badge):
         return {"Carte": "La modification a été effectuée"}, 200
 
 
-    return {"error": "Carte not found"}, 404
+    return {"error": "La carte n'existe pas"}, 404
 
 @app.route("/supprimer_une_carte/<id_badge>", methods=["GET"])
 def supprimer_une_carte(id_badge):
@@ -59,3 +64,48 @@ if __name__ == "__main__":
         db.create_all()
     app.run(host="0.0.0.0", debug=True)
 
+
+
+    # ────────────────────────────────────────────────────────────────────────
+    #                       ROUTE UTILISATEUR
+    # ────────────────────────────────────────────────────────────────────────
+@app.route("/modifier_un_utilisateur/<id>", methods=["GET", "POST"])
+def modifier_un_utilisateur(id):
+    if  request.method == "GET":
+        util = Utilisateur.query.filter_by(id=id).first()
+
+        if util:    
+            return {"id": util.id, "nom": util.nom, "prenom": util.prenom, "badges": util.badges, "droit": util.droits}, 201
+    elif request.method == "POST":
+        util = Utilisateur.query.filter_by(id=id).first()
+        data = request.get_json()
+        if "id" in data:
+            util.id = data["id"]
+        if "nom" in data:
+            util.nom = data["nom"].replace("\x00", "").strip()
+        if "prenom" in data:
+            util.prenom = data["prenom"].replace("\x00", "").strip()
+        db.session.commit()
+        return {"Utilisateur": "La modification a été effectuée"}, 200
+
+
+    return {"error": "L'utilisateur n'existe pas"}, 404
+
+@app.route("/supprimer_un_utilisateur/<id>", methods=["GET"])
+def supprimer_un_utilisateur(id):
+    util = Utilisateur.query.filter_by(id=id)
+    if util:
+        db.session.delete(util)
+        db.session.commit()
+        return {"Effacé" : "L'utilisateur à bien été supprimé"}, 201
+    return {"Erreur" : "Erreur"}, 404
+
+@app.route("/afficher_utilisateurs", methods=["GET"])
+def afficher_util():
+    util = Utilisateur.query.all()
+    return {"Utilisateurs": [{"identifiant": util.id, "nom": util.nom, "prenom": util.prenom, "badge": util.badges, "droits" : util.droits} for util in util]}, 201
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+    app.run(host="0.0.0.0", debug=True)
