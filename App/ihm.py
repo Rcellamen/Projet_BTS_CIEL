@@ -1,46 +1,10 @@
 import tkinter
 from tkinter import messagebox, ttk
-import requests
 import json
 
-# ════════════════════════════════════════════════════════════════════════════
-#                           CONFIGURATION
-# ════════════════════════════════════════════════════════════════════════════
+from Outils.cartes import *
+from Outils.utilisateurs import *
 
-IP = "172.20.10.5"
-
-BG       = "#f5f5f5"
-SURFACE  = "#ffffff"
-BORDER   = "#d0d0d0"
-ACCENT   = "#2563eb"
-TEXT     = "#1a1a1a"
-TEXT_DIM = "#6b7280"
-DANGER   = "#dc2626"
-
-FONT      = ("Segoe UI", 10)
-FONT_BOLD = ("Segoe UI", 10, "bold")
-FONT_HEAD = ("Segoe UI", 13, "bold")
-
-
-# ════════════════════════════════════════════════════════════════════════════
-#                           UTILITAIRES
-# ════════════════════════════════════════════════════════════════════════════
-
-def send_request(ip, port=80, endpoint="/", valeur=None):
-    """
-    Envoie une requête HTTP au serveur.
-
-    Si `valeur` est None, effectue un GET.
-    Sinon, effectue un POST avec `valeur` sérialisé en JSON.
-    Retourne le texte de la réponse, ou un message d'erreur en cas d'échec.
-    """
-    try:
-        url = f"http://{ip}:{port}{endpoint}"
-        if valeur is None:
-            return requests.get(url, timeout=5).text
-        return requests.post(url, timeout=5, json=valeur).text
-    except requests.exceptions.RequestException as e:
-        return f"Erreur: {e}"
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -107,8 +71,8 @@ class App(tkinter.Tk):
         self.nav_btns = {}
         for label, key, cmd in [
             ("Accueil",      "dashboard", self.show_dashboard),
-            ("Cartes",       "cards",     self.show_cards_tab),
-            ("Utilisateurs", "users",     self.show_users_tab),
+            ("Gestion des cartes",       "cartes",    self.affichage_onglet_carte),
+            ("Gestion des utilisateurs", "utilisateurs", self.affichage_onglet_util),
         ]:
             btn = tkinter.Button(sidebar, text=label, command=cmd,
                                  bg=SURFACE, fg=TEXT, font=FONT,
@@ -144,6 +108,141 @@ class App(tkinter.Tk):
         tkinter.Frame(self.content, bg=BORDER, height=1).pack(
             fill="x", padx=24, pady=(0, 12))
 
+
+    def _on_select(self, event=None):
+        """Active les boutons Modifier et Supprimer lorsqu'une carte est sélectionnée."""
+        state = "normal" if self.arbre_carte.selection() else "disabled"
+        self.btn_modifier.configure(state=state)
+        self.btn_supprimer.configure(state=state)
+
+
+    def affichage_onglet_carte(self):
+        """Affiche l'onglet de gestion des cartes avec le tableau et la barre d'outils."""
+        self._set_active_nav("cards")
+        self._clear_content()
+        self._page_title("Gestion des cartes")
+
+        # Barre d'outils
+        toolbar = tkinter.Frame(self.content, bg=BG)
+        toolbar.pack(fill="x", padx=24, pady=(0, 8))
+        tkinter.Button(toolbar, text="Ajouter", command=ajouter_carte,
+                       bg=ACCENT, fg="white", relief="flat", bd=0,
+                       padx=10, pady=5, font=FONT,
+                       activebackground="#1d4ed8", activeforeground="white",
+                       cursor="hand2").pack(side="left", padx=(0, 6))
+        
+        self.btn_modifier = tkinter.Button(toolbar, text="Modifier",
+                        command=modifier_carte,
+                        state="disabled", relief="flat", bd=0,
+                        bg=BG, fg=TEXT, padx=10, pady=5,
+                        font=FONT, cursor="hand2",
+                        activebackground=BORDER)
+        self.btn_modifier.pack(side="left", padx=(0, 6))
+        self.btn_supprimer = tkinter.Button(toolbar, text="Supprimer",
+                                         command=supprimer_carte,
+                                         state="disabled", relief="flat", bd=0,
+                                         bg=BG, fg=DANGER, padx=10, pady=5,
+                                         font=FONT, cursor="hand2",
+                                         activebackground=BORDER)
+        self.btn_supprimer.pack(side="left")
+        self.btn_charger = tkinter.Button(toolbar, text="Actualiser", command=charger_carte,
+                       bg=BG, fg=TEXT, relief="flat", bd=0,
+                       padx=10, pady=5, font=FONT,
+                       activebackground=BORDER, cursor="hand2").pack(side="right")
+
+        # Tableau
+        frame = tkinter.Frame(self.content, bg=BORDER, bd=1)
+        frame.pack(fill="both", expand=True, padx=24, pady=(0, 20))
+        scroll = ttk.Scrollbar(frame, style="T.Vertical.TScrollbar")
+        scroll.pack(side="right", fill="y")
+        self.arbre_carte = ttk.Treeview(frame,
+            columns=("id", "texte", "id_util", "date_ajout"),
+            show="headings", style="T.Treeview",
+            yscrollcommand=scroll.set)
+        scroll.config(command=self.arbre_carte.yview)
+
+        for col, label, width in [
+            ("id",      "ID Badge",       140),
+            ("texte",   "Texte",          200),
+            ("id_util", "ID Utilisateur", 180),
+            ("date_ajout", "Date de création", 140),
+        ]:
+            self.arbre_carte.heading(col, text=label)
+            self.arbre_carte.column(col, width=width, anchor="center")
+
+        self.arbre_carte.pack(fill="both", expand=True)
+        self.arbre_carte.bind("<<TreeviewSelect>>", self._on_select)
+
+        charger_carte
+
+
+
+
+    def affichage_onglet_util(self):
+        """Affiche l'onglet des utilisateurs."""
+        self._set_active_nav("utilisateurs")
+        self._clear_content()
+        self._page_title("Utilisateurs")
+
+        # Barre d'outils
+        toolbar = tkinter.Frame(self.content, bg=BG)
+        toolbar.pack(fill="x", padx=24, pady=(0, 8))
+
+        self.btn_ajouter = tkinter.Button(toolbar, text="Ajouter", command=ajouter_util,
+                       bg=ACCENT, fg="white", relief="flat", bd=0,
+                       padx=10, pady=5, font=FONT,
+                       activebackground="#1d4ed8", activeforeground="white",
+                       cursor="hand2").pack(side="left", padx=(0, 6))
+
+        self.btn_modifier = tkinter.Button(toolbar, text="Modifier",
+                                         command=modifier_util,
+                                         state="disabled", relief="flat", bd=0,
+                                         bg=BG, fg=TEXT, padx=10, pady=5,
+                                         font=FONT, cursor="hand2",
+                                         activebackground=BORDER)
+        self.btn_modifier.pack(side="left", padx=(0, 6))
+
+        self.btn_supprimer = tkinter.Button(toolbar, text="Supprimer",
+                                         command=supprimer_util,
+                                         state="disabled", relief="flat", bd=0,
+                                         bg=BG, fg=DANGER, padx=10, pady=5,
+                                         font=FONT, cursor="hand2",
+                                         activebackground=BORDER)
+        self.btn_supprimer.pack(side="left")
+
+        tkinter.Button(toolbar, text="Actualiser", command=charger_util,
+                       bg=BG, fg=TEXT, relief="flat", bd=0,
+                       padx=10, pady=5, font=FONT,
+                       activebackground=BORDER, cursor="hand2").pack(side="right")
+
+        # Tableau
+        frame = tkinter.Frame(self.content, bg=BORDER, bd=1)
+        frame.pack(fill="both", expand=True, padx=24, pady=(0, 20))
+
+        scroll = ttk.Scrollbar(frame, style="T.Vertical.TScrollbar")
+        scroll.pack(side="right", fill="y")
+
+        self.arbre_util = ttk.Treeview(frame,
+            columns=("id", "nom", "prenom", "badges", "droits"),
+            show="headings", style="T.Treeview",
+            yscrollcommand=scroll.set)
+        scroll.config(command=self.arbre_util.yview)
+
+        for col, label, width in [
+            ("id",      "ID Utilisateur",       140),
+            ("nom",   "Nom",          200),
+            ("prenom", "Prénom", 180),
+            ("badges", "ID Badge", 140),
+            ("droits", "Droits", 100)
+        ]:
+            self.arbre_util.heading(col, text=label)
+            self.arbre_util.column(col, width=width, anchor="center")
+
+        self.arbre_util.pack(fill="both", expand=True)
+        self.arbre_util.bind("<<TreeviewSelect>>", self._on_select)
+
+        charger_util
+    
     # ────────────────────────────────────────────────────────────────────────
     #                           DASHBOARD
     # ────────────────────────────────────────────────────────────────────────
@@ -157,143 +256,6 @@ class App(tkinter.Tk):
         tkinter.Label(self.content, text=f"Serveur : {IP}:5000",
                       bg=BG, fg=TEXT_DIM, font=FONT).pack(anchor="w", padx=24)
 
-    # ────────────────────────────────────────────────────────────────────────
-    #                       GESTION DES CARTES
-    # ────────────────────────────────────────────────────────────────────────
-
-    def show_cards_tab(self):
-        """Affiche l'onglet de gestion des cartes avec le tableau et la barre d'outils."""
-        self._set_active_nav("cards")
-        self._clear_content()
-        self._page_title("Cartes")
-
-        # Barre d'outils
-        toolbar = tkinter.Frame(self.content, bg=BG)
-        toolbar.pack(fill="x", padx=24, pady=(0, 8))
-
-        tkinter.Button(toolbar, text="Ajouter", command=self.add_card,
-                       bg=ACCENT, fg="white", relief="flat", bd=0,
-                       padx=10, pady=5, font=FONT,
-                       activebackground="#1d4ed8", activeforeground="white",
-                       cursor="hand2").pack(side="left", padx=(0, 6))
-
-        self.btn_modifier = tkinter.Button(toolbar, text="Modifier",
-                                         command=self.modify_card,
-                                         state="disabled", relief="flat", bd=0,
-                                         bg=BG, fg=TEXT, padx=10, pady=5,
-                                         font=FONT, cursor="hand2",
-                                         activebackground=BORDER)
-        self.btn_modifier.pack(side="left", padx=(0, 6))
-
-        self.btn_supprimer = tkinter.Button(toolbar, text="Supprimer",
-                                         command=self.delete_card,
-                                         state="disabled", relief="flat", bd=0,
-                                         bg=BG, fg=DANGER, padx=10, pady=5,
-                                         font=FONT, cursor="hand2",
-                                         activebackground=BORDER)
-        self.btn_supprimer.pack(side="left")
-
-        tkinter.Button(toolbar, text="Actualiser", command=self.load_cards,
-                       bg=BG, fg=TEXT, relief="flat", bd=0,
-                       padx=10, pady=5, font=FONT,
-                       activebackground=BORDER, cursor="hand2").pack(side="right")
-
-        # Tableau
-        frame = tkinter.Frame(self.content, bg=BORDER, bd=1)
-        frame.pack(fill="both", expand=True, padx=24, pady=(0, 20))
-
-        scroll = ttk.Scrollbar(frame, style="T.Vertical.TScrollbar")
-        scroll.pack(side="right", fill="y")
-
-        self.cards_tree = ttk.Treeview(frame,
-            columns=("id", "texte", "id_util", "date_ajout"),
-            show="headings", style="T.Treeview",
-            yscrollcommand=scroll.set)
-        scroll.config(command=self.cards_tree.yview)
-
-        for col, label, width in [
-            ("id",      "ID Badge",       140),
-            ("texte",   "Texte",          200),
-            ("id_util", "ID Utilisateur", 180),
-            ("date_ajout", "Date de création", 140),
-        ]:
-            self.cards_tree.heading(col, text=label)
-            self.cards_tree.column(col, width=width, anchor="center")
-
-        self.cards_tree.pack(fill="both", expand=True)
-        self.cards_tree.bind("<<TreeviewSelect>>", self._on_card_select)
-
-        self.load_cards()
-
-    def _on_card_select(self, event=None):
-        """Active les boutons Modifier et Supprimer lorsqu'une carte est sélectionnée."""
-        state = "normal" if self.cards_tree.selection() else "disabled"
-        self.btn_modifier.configure(state=state)
-        self.btn_supprimer.configure(state=state)
-
-    def charger_carte(self):
-        """Récupère la liste des cartes depuis le serveur et remplit le tableau."""
-        response = send_request(ip=IP, port=5000, endpoint="/afficher_cartes")
-        try:
-            parsed = json.loads(response)
-            self.cards_data = parsed.get("cartes", parsed) if isinstance(parsed, dict) else parsed
-            self.cards_tree.delete(*self.cards_tree.get_children())
-            for card in self.cards_data:
-                self.cards_tree.insert("", "end", values=(
-                    card.get("id", ""),
-                    card.get("texte", ""),
-                    card.get("id_util", ""),
-                    card.get("date_ajout", "")
-                ))
-        except Exception:
-            messagebox.showerror("Erreur",
-                                 f"Impossible de récupérer les cartes :\n{response}")
-
-    def ajouter_carte(self):
-        """Ouvre le formulaire d'ajout d'une nouvelle carte."""
-        def submit(data, win):
-            res = send_request(ip=IP, port=5000,
-                               endpoint="/ajouter_une_carte", valeur=data)
-            messagebox.showinfo("Résultat", res, parent=win)
-            self.load_cards()
-            win.destroy()
-
-        self._modal("Ajouter une carte",
-                    [("id", "ID Badge"), ("texte", "Texte"),
-                     ("id_util", "ID Utilisateur")], submit)
-
-    def modifier_carte(self):
-        """Ouvre le formulaire de modification de la carte sélectionnée dans le tableau."""
-        sel = self.cards_tree.selection()
-        if not sel:
-            return
-        vals = self.cards_tree.item(sel[0], "values")
-        prefill = {"id": vals[0], "texte": vals[1], "id_util": vals[2]}
-
-        def submit(data, win):
-            res = send_request(ip=IP, port=5000,
-                               endpoint=f"/modifier_une_carte/{data['id']}",
-                               valeur=data)
-            messagebox.showinfo("Résultat", res, parent=win)
-            self.load_cards()
-            win.destroy()
-
-        self._modal("Modifier une carte",
-                    [("id", "ID Badge"), ("texte", "Texte"),
-                     ("id_util", "ID Utilisateur")], submit, prefill=prefill)
-
-    def supprimer_carte(self):
-        """Supprime la carte sélectionnée après confirmation de l'utilisateur."""
-        sel = self.cards_tree.selection()
-        if not sel:
-            return
-        card_id = self.cards_tree.item(sel[0], "values")[0]
-        if not messagebox.askyesno("Confirmer", f"Supprimer la carte {card_id} ?"):
-            return
-        res = send_request(ip=IP, port=5000,
-                           endpoint=f"/supprimer_une_carte/{card_id}")
-        messagebox.showinfo("Résultat", res)
-        self.load_cards()
 
     # ────────────────────────────────────────────────────────────────────────
     #                       MODAL GÉNÉRIQUE
@@ -358,20 +320,7 @@ class App(tkinter.Tk):
         x = self.winfo_x() + (self.winfo_width()  - win.winfo_width())  // 2
         y = self.winfo_y() + (self.winfo_height() - win.winfo_height()) // 2
         win.geometry(f"+{x}+{y}")
-
-    # ────────────────────────────────────────────────────────────────────────
-    #                          UTILISATEURS
-    # ────────────────────────────────────────────────────────────────────────
-
-    def show_users_tab(self):
-        """Affiche l'onglet de gestion des utilisateurs (fonctionnalités à venir)."""
-        self._set_active_nav("users")
-        self._clear_content()
-        self._page_title("Utilisateurs")
-
-        tkinter.Label(self.content, text="Fonctionnalités à venir.",
-                      bg=BG, fg=TEXT_DIM, font=FONT).pack(anchor="w", padx=24)
-
+ 
 
 if __name__ == "__main__":
     app = App()
