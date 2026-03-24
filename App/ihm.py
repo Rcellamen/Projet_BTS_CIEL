@@ -20,7 +20,8 @@ class App(tkinter.Tk):
         self.geometry("900x580")
         self.minsize(700, 480)
         self.configure(bg=BG)
-        self.cards_data = []
+        self.donnee_cartes = []
+        self.donnee_util = []
         self._setup_styles()
         self._create_widgets()
 
@@ -125,7 +126,8 @@ class App(tkinter.Tk):
         # Barre d'outils
         toolbar = tkinter.Frame(self.content, bg=BG)
         toolbar.pack(fill="x", padx=24, pady=(0, 8))
-        tkinter.Button(toolbar, text="Ajouter", command=ajouter_carte,
+
+        self.btn_ajouter = tkinter.Button(toolbar, text="Ajouter", command=lambda:ajouter_carte(self),
                        bg=ACCENT, fg="white", relief="flat", bd=0,
                        padx=10, pady=5, font=FONT,
                        activebackground="#1d4ed8", activeforeground="white",
@@ -139,13 +141,13 @@ class App(tkinter.Tk):
                         activebackground=BORDER)
         self.btn_modifier.pack(side="left", padx=(0, 6))
         self.btn_supprimer = tkinter.Button(toolbar, text="Supprimer",
-                                         command=supprimer_carte,
+                                         command=lambda:supprimer_carte(self),
                                          state="disabled", relief="flat", bd=0,
                                          bg=BG, fg=DANGER, padx=10, pady=5,
                                          font=FONT, cursor="hand2",
                                          activebackground=BORDER)
         self.btn_supprimer.pack(side="left")
-        self.btn_charger = tkinter.Button(toolbar, text="Actualiser", command=charger_carte,
+        self.btn_charger = tkinter.Button(toolbar, text="Actualiser", command=lambda:charger_carte(self),
                        bg=BG, fg=TEXT, relief="flat", bd=0,
                        padx=10, pady=5, font=FONT,
                        activebackground=BORDER, cursor="hand2").pack(side="right")
@@ -188,14 +190,14 @@ class App(tkinter.Tk):
         toolbar = tkinter.Frame(self.content, bg=BG)
         toolbar.pack(fill="x", padx=24, pady=(0, 8))
 
-        self.btn_ajouter = tkinter.Button(toolbar, text="Ajouter", command=ajouter_util,
+        self.btn_ajouter = tkinter.Button(toolbar, text="Ajouter", command=lambda:ajouter_util(self),
                        bg=ACCENT, fg="white", relief="flat", bd=0,
                        padx=10, pady=5, font=FONT,
                        activebackground="#1d4ed8", activeforeground="white",
                        cursor="hand2").pack(side="left", padx=(0, 6))
 
         self.btn_modifier = tkinter.Button(toolbar, text="Modifier",
-                                         command=modifier_util,
+                                         command=lambda:modifier_util(self),
                                          state="disabled", relief="flat", bd=0,
                                          bg=BG, fg=TEXT, padx=10, pady=5,
                                          font=FONT, cursor="hand2",
@@ -203,14 +205,14 @@ class App(tkinter.Tk):
         self.btn_modifier.pack(side="left", padx=(0, 6))
 
         self.btn_supprimer = tkinter.Button(toolbar, text="Supprimer",
-                                         command=supprimer_util,
+                                         command=lambda:supprimer_util(self),
                                          state="disabled", relief="flat", bd=0,
                                          bg=BG, fg=DANGER, padx=10, pady=5,
                                          font=FONT, cursor="hand2",
                                          activebackground=BORDER)
         self.btn_supprimer.pack(side="left")
 
-        tkinter.Button(toolbar, text="Actualiser", command=charger_util,
+        tkinter.Button(toolbar, text="Actualiser", command=lambda:charger_util(self),
                        bg=BG, fg=TEXT, relief="flat", bd=0,
                        padx=10, pady=5, font=FONT,
                        activebackground=BORDER, cursor="hand2").pack(side="right")
@@ -285,17 +287,30 @@ class App(tkinter.Tk):
         body.pack(fill="both")
 
         entries = {}
-        for key, label in fields:
+        
+        for field in fields:
+            key, label, *opts = field  # dépaquète le tuple (2 ou 4 éléments)
+            widget_type = opts[0] if opts else "entry"
+            choices     = opts[1] if len(opts) > 1 else []
+
             tkinter.Label(body, text=label, bg=BG, fg=TEXT_DIM,
                           font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 2))
-            entry = tkinter.Entry(body, bg=SURFACE, fg=TEXT,
-                                  insertbackground=ACCENT,
-                                  relief="solid", bd=1, font=FONT,
-                                  highlightthickness=0)
-            entry.pack(fill="x", ipady=5)
-            if prefill and key in prefill:
-                entry.insert(0, prefill[key])
-            entries[key] = entry
+
+            if widget_type == "combo":
+                widget = ttk.Combobox(body, values=choices, state="readonly",
+                                      font=FONT)
+                widget.set(choices[0] if choices else "")
+                widget.pack(fill="x", ipady=5)
+                entries[key] = widget
+            else:
+                widget = tkinter.Entry(body, bg=SURFACE, fg=TEXT,
+                                       insertbackground=ACCENT,
+                                       relief="solid", bd=1, font=FONT,
+                                       highlightthickness=0)
+                widget.pack(fill="x", ipady=5)
+                if prefill and key in prefill:
+                    widget.insert(0, prefill[key])
+                entries[key] = widget
 
         tkinter.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=20)
         footer = tkinter.Frame(win, bg=BG, padx=20, pady=12)
@@ -320,7 +335,7 @@ class App(tkinter.Tk):
         x = self.winfo_x() + (self.winfo_width()  - win.winfo_width())  // 2
         y = self.winfo_y() + (self.winfo_height() - win.winfo_height()) // 2
         win.geometry(f"+{x}+{y}")
- 
+        
 
 if __name__ == "__main__":
     app = App()
