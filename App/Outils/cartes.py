@@ -11,9 +11,9 @@ def charger_carte(self):
     response = envoi_requete(ip=IP, port=5000, endpoint="/afficher_cartes")
     try:
         parsed = json.loads(response)
-        self.cards_data = parsed.get("cartes", parsed) if isinstance(parsed, dict) else parsed
+        self.donnee_cartes = parsed.get("cartes", parsed) if isinstance(parsed, dict) else parsed
         self.arbre_carte.delete(*self.arbre_carte.get_children())
-        for card in self.cards_data:
+        for card in self.donnee_cartes:
             self.arbre_carte.insert("", "end", values=(
                 card.get("id", ""),
                 card.get("texte", ""),
@@ -30,7 +30,7 @@ def ajouter_carte(self):
         res = envoi_requete(ip=IP, port=5000,
                            endpoint="/ajouter_une_carte", valeur=data)
         messagebox.showinfo("Résultat", res, parent=win)
-        self.load_cards()
+        self.charger_carte()
         win.destroy()
     self._modal("Ajouter une carte",
                 [("id", "ID Badge"), ("texte", "Texte"),
@@ -48,7 +48,7 @@ def modifier_carte(self):
                            endpoint=f"/modifier_une_carte/{data['id']}",
                            valeur=data)
         messagebox.showinfo("Résultat", res, parent=win)
-        self.load_cards()
+        self.charger_carte()
         win.destroy()
     self._modal("Modifier une carte",
                 [("id", "ID Badge"), ("texte", "Texte"),
@@ -65,4 +65,4 @@ def supprimer_carte(self):
     res = envoi_requete(ip=IP, port=5000,
                        endpoint=f"/supprimer_une_carte/{card_id}")
     messagebox.showinfo("Résultat", res)
-    self.load_cards()
+    self.charger_carte()
