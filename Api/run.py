@@ -5,32 +5,20 @@ from model import Utilisateur
 from datetime import datetime
 from config import app
 from flask import request
-
+from capteur import Lire_Badge
+from capteur import Lire_PIR
 
     # ────────────────────────────────────────────────────────────────────────
     #                       ROUTES CARTES
     # ────────────────────────────────────────────────────────────────────────
 
-@app.route("/ajouter_une_carte<id_badges>", methods=["POST"])
+@app.route("/ajouter_une_carte", methods=["POST"])
 def ajouter_une_carte():
+    id, text = Lire_Badge(False)
+    print (id, text)
     if not Badge.query.filter_by(id_badge=id).first():
-        carte = Badge.query.filter_by(id_badge=id).first()
-        data = request.get_json()
-        if "id" in data:
-            carte.id_badges = data['id']
-
-        if "nom" in data:
-            carte.nom = data['nom']
-
-        if "prenom" in data:
-            carte.prenom = data['prenom']
-
-        if "badges" in data:
-            carte.badges = data['badges']
-
-        if "droits" in data:
-            carte.droits = data['droits']
-               
+        carte = Badge(id_badge=id, val_badge=text, date_ajout=datetime.now())
+        carte = Badge.query.filter_by(id_badge=id).first()   
         db.session.add(carte)
         db.session.commit()
         # Retourne un dictionnaire propre
@@ -61,7 +49,8 @@ def modifier_une_carte(id_badge):
 
 @app.route("/supprimer_une_carte/<id_badge>", methods=["GET"])
 def supprimer_une_carte(id_badge):
-    carte = Badge.query.filter_by(id_badge=id_badge)
+    carte = Badge.query.filter_by(id_badge=id_badge).first()
+    print(carte)
     if carte:
         db.session.delete(carte)
         db.session.commit()
@@ -150,6 +139,17 @@ def supprimer_un_utilisateur(id):
 def afficher_util():
     util = Utilisateur.query.all()
     return {"Utilisateurs": [{"identifiant": util.id, "nom": util.nom, "prenom": util.prenom, "badge": util.badges, "droits" : util.droits} for util in util]}, 201
+
+
+
+
+# ────────────────────────────────────────────────────────────────────────
+#                           TEST
+# ────────────────────────────────────────────────────────────────────────
+
+@app.route("/test_PIR", methods=["GET"])
+def test_PIR():
+    return Lire_PIR()
 
 if __name__ == "__main__":
     with app.app_context():

@@ -21,7 +21,7 @@ class Utilisateur(db.Model):
     nom = db.Column(db.String(20), unique=False, nullable=False)
     prenom = db.Column(db.String(20), unique=False, nullable=False)
     badges = db.relationship('Badge', backref='utilisateur', lazy=True)
-    droits = db.Column(db.String(20),unique=False, nullable=False)
+    droits = db.Column(db.String(30),unique=False, nullable=False)
 
     def __repr__(self):
         return f'<Utilisateur {self.nom}>'
