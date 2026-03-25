@@ -1,6 +1,8 @@
 import RPi.GPIO as GPIO
 from mfrc522 import SimpleMFRC522
 import time
+LED_PIN = 17
+PIR_PIN = 4
 
 def Lire_Badge(lecture_continue=False):
     """
@@ -46,3 +48,32 @@ def Lire_Badge(lecture_continue=False):
         # Nettoyage propre du GPIO
         GPIO.cleanup()
         return id, text
+
+
+def Lire_PIR():
+
+    try:
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        PIR_PIN = 4
+        GPIO.setup(PIR_PIN, GPIO.IN)
+        GPIO.setup(LED_PIN, GPIO.OUT)
+
+        etat = GPIO.input(PIR_PIN)
+
+        if etat:
+            GPIO.output(LED_PIN, GPIO.HIGH)
+        else:
+            GPIO.output(LED_PIN, GPIO.LOW)
+
+        return ({
+            "statut": "ok",
+            "mouvement": bool(etat),
+            "message": "Mouvement détecté" if etat else "Aucun mouvement"
+        }), 200
+
+    except Exception as e:
+        return ({
+            "statut": "erreur",
+            "message": str(e)
+        }), 500 
