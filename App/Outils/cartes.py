@@ -60,9 +60,10 @@ def supprimer_carte(self):
     if not sel:
         return
     card_id = self.arbre_carte.item(sel[0], "values")[0]
+    print(card_id, sel)
     if not messagebox.askyesno("Confirmer", f"Supprimer la carte {card_id} ?"):
         return
     res = envoi_requete(ip=IP, port=5000,
                        endpoint=f"/supprimer_une_carte/{card_id}")
     messagebox.showinfo("Résultat", res)
-    self.charger_carte()
+    charger_carte(self)

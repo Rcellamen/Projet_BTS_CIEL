@@ -31,7 +31,7 @@ def ajouter_util(self):
         res = envoi_requete(ip=IP, port=5000,
                            endpoint="/ajouter_un_utilisateur", valeur=data)
         messagebox.showinfo("Résultat", res, parent=win)
-        self.charger_util()
+        charger_util(self)
         win.destroy()
     self._modal("Ajouter un utilisateur",
                 [
