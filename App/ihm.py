@@ -115,19 +115,29 @@ class App(tkinter.Tk):
         state = "normal" if self.arbre_carte.selection() else "disabled"
         self.btn_modifier.configure(state=state)
         self.btn_supprimer.configure(state=state)
+    
+    def testPIR(self):
+        try:
+            response = envoi_requete(ip=IP, port=5000, endpoint="/test_PIR")
+            messagebox.showinfo("Test PIR", response)
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Impossible de contacter le Raspberry : {e}")
 
+
+# ────────────────────────────────────────────────────────────────────────
+#                           ONGLET CARTE
+# ────────────────────────────────────────────────────────────────────────
 
     def affichage_onglet_carte(self):
         """Affiche l'onglet de gestion des cartes avec le tableau et la barre d'outils."""
         self._set_active_nav("cards")
         self._clear_content()
         self._page_title("Gestion des cartes")
-
         # Barre d'outils
         toolbar = tkinter.Frame(self.content, bg=BG)
         toolbar.pack(fill="x", padx=24, pady=(0, 8))
 
-        self.btn_ajouter = tkinter.Button(toolbar, text="Ajouter", command=lambda:ajouter_carte(self),
+        self.btn_ajouter = tkinter.Button(toolbar, text="Ajouter", command=lambda:self._fenetre_scan("Veuillez badger une carte", [""], ),
                        bg=ACCENT, fg="white", relief="flat", bd=0,
                        padx=10, pady=5, font=FONT,
                        activebackground="#1d4ed8", activeforeground="white",
@@ -175,10 +185,12 @@ class App(tkinter.Tk):
         self.arbre_carte.pack(fill="both", expand=True)
         self.arbre_carte.bind("<<TreeviewSelect>>", self._on_select)
 
-        charger_carte
+        charger_carte(self)
 
 
-
+# ────────────────────────────────────────────────────────────────────────
+#                           ONGLET UTIL
+# ────────────────────────────────────────────────────────────────────────
 
     def affichage_onglet_util(self):
         """Affiche l'onglet des utilisateurs."""
@@ -257,10 +269,48 @@ class App(tkinter.Tk):
 
         tkinter.Label(self.content, text=f"Serveur : {IP}:5000",
                       bg=BG, fg=TEXT_DIM, font=FONT).pack(anchor="w", padx=24)
+        
+        frame = tkinter.Frame(self.content, bg=BG)
+        frame.pack(fill="both", expand=True)
 
+        tkinter.Button(frame, text="Test capteur PIR",
+            command=self.testPIR,
+            relief="flat", bd=0,
+            background="#1d4ed8", fg="#FFFFFF", padx=10, pady=5,
+            font=FONT, cursor="hand2").pack(expand=True)
 
     # ────────────────────────────────────────────────────────────────────────
-    #                       MODAL GÉNÉRIQUE
+    #                    FENETRE SCAN CARTE
+    # ────────────────────────────────────────────────────────────────────────
+    def _fenetre_scan(self, title, fields, on_submit, prefill=None):
+        """
+        Crée une fenêtre qui demande scanner une carte
+
+        Paramètres :
+        - title      : titre affiché en haut de la fenêtre
+        - fields     : liste de tuples (clé, libellé) définissant les champs
+        - on_submit  : fonction(data, win) appelée à la validation
+        - prefill    : dictionnaire optionnel pour pré-remplir les champs
+        """
+        win = tkinter.Toplevel(self)
+        win.title(title)
+        win.configure(bg=BG)
+        win.resizable(True, True)
+        win.grab_set()
+
+        tkinter.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=20)
+
+        body = tkinter.Frame(win, bg=BG, padx=20, pady=9)
+        body.pack(fill="both")
+
+        entries = {}
+
+        tkinter.Label(body, text="Veuillez scanner une carte", bg=BG, fg=TEXT_DIM,
+                              font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 2), command=ajouter_carte)
+   
+
+    # ────────────────────────────────────────────────────────────────────────
+    #                    FENETRE AJOUTER/MODIFIER
     # ────────────────────────────────────────────────────────────────────────
 
     def _modal(self, title, fields, on_submit, prefill=None):
@@ -287,56 +337,96 @@ class App(tkinter.Tk):
         body.pack(fill="both")
 
         entries = {}
-        
-        for field in fields:
-            key, label, *opts = field  # dépaquète le tuple (2 ou 4 éléments)
-            widget_type = opts[0] if opts else "entry"
-            choices     = opts[1] if len(opts) > 1 else []
 
-            tkinter.Label(body, text=label, bg=BG, fg=TEXT_DIM,
-                          font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 2))
+        if title == ("Ajouter un utilisateur" or "Modifier un utilisateur"):
 
-            if widget_type == "combo":
-                widget = ttk.Combobox(body, values=choices, state="readonly",
-                                      font=FONT)
-                widget.set(choices[0] if choices else "")
-                widget.pack(fill="x", ipady=5)
-                entries[key] = widget
-            else:
+            for field in fields:
+                key, label, *opts = field  # dépaquète le tuple (2 ou 4 éléments)
+                widget_type = opts[0] if opts else "entry"
+                choices     = opts[1] if len(opts) > 1 else []
+
+                tkinter.Label(body, text=label, bg=BG, fg=TEXT_DIM,
+                              font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 2))
+
+                if widget_type == "combo":
+                    widget = ttk.Combobox(body, values=choices, state="readonly",
+                                          font=FONT)
+                    widget.set(choices[0] if choices else "")
+                    widget.pack(fill="x", ipady=5)
+                    entries[key] = widget
+                else:
+                    widget = tkinter.Entry(body, bg=SURFACE, fg=TEXT,
+                                           insertbackground=ACCENT,
+                                           relief="solid", bd=1, font=FONT,
+                                           highlightthickness=0)
+                    widget.pack(fill="x", ipady=5)
+                    if prefill and key in prefill:
+                        widget.insert(0, prefill[key])
+                    entries[key] = widget
+
+            tkinter.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=20)
+            footer = tkinter.Frame(win, bg=BG, padx=20, pady=12)
+            footer.pack(fill="x")
+            tkinter.Button(footer, text="Annuler", command=win.destroy,
+                           bg=BG, fg=TEXT, relief="flat", bd=0,
+                           padx=10, pady=5, font=FONT,
+                           activebackground=BORDER, cursor="hand2").pack(
+                side="right", padx=(6, 0))
+
+            def submit():
+                on_submit({k: e.get() for k, e in entries.items()}, win)
+            tkinter.Button(footer, text="Valider", command=submit,
+                           bg=ACCENT, fg="white", relief="flat", bd=0,
+                           padx=10, pady=5, font=FONT,
+                           activebackground="#1d4ed8", cursor="hand2").pack(side="right")
+
+        elif title in ("Ajouter une carte", "Modifier une carte"):
+
+            for i, field in enumerate(fields):
+                key, label, *opts = field  # dépaquète le tuple (2 ou 4 éléments)
+                widget_type = opts[0] if opts else "entry"
+                choices     = opts[1] if len(opts) > 1 else []
+
+                tkinter.Label(body, text=label, bg=BG, fg=TEXT_DIM,
+                              font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 2))
+                
                 widget = tkinter.Entry(body, bg=SURFACE, fg=TEXT,
-                                       insertbackground=ACCENT,
-                                       relief="solid", bd=1, font=FONT,
-                                       highlightthickness=0)
+                                   insertbackground=ACCENT,
+                                   relief="solid", bd=1, font=FONT,
+                                   highlightthickness=0)
+            
                 widget.pack(fill="x", ipady=5)
                 if prefill and key in prefill:
                     widget.insert(0, prefill[key])
+                if i == 0:
+                    widget.config(state= "readonly")
                 entries[key] = widget
 
         tkinter.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=20)
         footer = tkinter.Frame(win, bg=BG, padx=20, pady=12)
         footer.pack(fill="x")
-
         tkinter.Button(footer, text="Annuler", command=win.destroy,
                        bg=BG, fg=TEXT, relief="flat", bd=0,
                        padx=10, pady=5, font=FONT,
                        activebackground=BORDER, cursor="hand2").pack(
             side="right", padx=(6, 0))
-
+        
         def submit():
             on_submit({k: e.get() for k, e in entries.items()}, win)
-
         tkinter.Button(footer, text="Valider", command=submit,
                        bg=ACCENT, fg="white", relief="flat", bd=0,
                        padx=10, pady=5, font=FONT,
                        activebackground="#1d4ed8", cursor="hand2").pack(side="right")
-
+        
         win.geometry(f"380x{120 + len(fields) * 62}")
         win.update_idletasks()
         x = self.winfo_x() + (self.winfo_width()  - win.winfo_width())  // 2
         y = self.winfo_y() + (self.winfo_height() - win.winfo_height()) // 2
         win.geometry(f"+{x}+{y}")
-        
+
 
 if __name__ == "__main__":
     app = App()
     app.mainloop()
+
+     
