@@ -18,7 +18,7 @@ def ajouter_une_carte():
     texte = data.get('texte')
     id_util = data.get('id_util')
     if not Badge.query.filter_by(id_badge=id_badge).first():
-        carte = Badge(id_badge=id_badge, val_badge=texte, id_utilisateur=id_util if id_util not in ("None", "", None) else None, date_ajout=datetime.now())
+        carte = Badge(id_badge=id_badge, val_badge=texte if texte not in ("None", "", None) else None, id_utilisateur=id_util if id_util not in ("None", "", None) else None, date_ajout=datetime.now())
         db.session.add(carte)
         db.session.commit()
 
@@ -118,12 +118,43 @@ def modifier_un_utilisateur(id_util):
 
 @app.route("/supprimer_un_utilisateur/<id_util>", methods=["GET"])
 def supprimer_un_utilisateur(id_util):
-    util = Utilisateur.query.filter_by(id_util=id_util)
+    util = Utilisateur.query.filter_by(id_util=id_util).first()
     if util:
         db.session.delete(util)
         db.session.commit()
         return {"Effacé" : "L'utilisateur à bien été supprimé"}, 201
     return {"Erreur" : "Erreur"}, 404
+
+@app.route("/ajouter_une_carte_a_util/<int:id_util>", methods=["POST"])
+def ajouter_une_carte_a_util(id_util):
+    data = request.get_json()
+    id_badge = data.get('id_badge')
+
+    badge = Badge.query.filter_by(id_badge=id_badge).first()
+    if not badge:
+        return {"Erreur": "Badge introuvable"}, 404
+
+    util = Utilisateur.query.filter_by(id_util=id_util).first()
+    if not util:
+        return {"Erreur": "Utilisateur introuvable"}, 404
+
+    badge.id_utilisateur = id_util
+    db.session.commit()
+    return {"Modifié": f"Badge {id_badge} assigné à l'utilisateur {id_util}"}, 200
+
+def ajouter_une_carte():
+    data = request.get_json() 
+    id_badge = data.get('id_badge')
+    texte = data.get('texte')
+    id_util = data.get('id_util')
+    if not Badge.query.filter_by(id_badge=id_badge).first():
+        carte = Badge(id_badge=id_badge, val_badge=texte, id_utilisateur=id_util if id_util not in ("None", "", None) else None, date_ajout=datetime.now())
+        db.session.add(carte)
+        db.session.commit()
+
+        return {"Ajouté": "La carte a bien été ajoutée"}, 201
+    else:
+        return {"Erreur": "La carte existe déjà"}, 404
 
 
 @app.route("/afficher_utilisateurs", methods=["GET"])
@@ -150,7 +181,7 @@ def test_PIR():
 
 @app.route("/test_LB", methods=["GET"])
 def test_LB():
-    return lire_badge()
+    return Lire_Badge()
 
 if __name__ == "__main__":
     with app.app_context():

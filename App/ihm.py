@@ -122,6 +122,7 @@ class App(tkinter.Tk):
         elif hasattr(self, "arbre_util") and widget == self.arbre_util:
             self.btn_modifier.configure(state=state)
             self.btn_supprimer.configure(state=state)
+            self.btn_ajouter_carte_util.configure(state=state)
     
     def _testPIR(self):
         try:
@@ -152,7 +153,7 @@ class App(tkinter.Tk):
         toolbar.pack(fill="x", padx=24, pady=(0, 8))
 
         self.btn_ajouter = tkinter.Button(
-            toolbar,text="Ajouter", command=self._ouvrir_scan_puis_modal,
+            toolbar,text="Ajouter", command=lambda:self._ouvrir_scan_puis_modal("carte"),
             bg=ACCENT, fg="white", relief="flat", bd=0,
             padx=10, pady=5, font=FONT,
             activebackground="#1d4ed8", activeforeground="white",
@@ -240,6 +241,14 @@ class App(tkinter.Tk):
                                          font=FONT, cursor="hand2",
                                          activebackground=BORDER)
         self.btn_supprimer.pack(side="left")
+
+        self.btn_ajouter_carte_util = tkinter.Button(toolbar, text="Ajouter une carte",
+                                         command=lambda:self._ouvrir_scan_puis_modal("util"),
+                                         state="disabled", relief="flat", bd=0,
+                                         bg=BG, fg=DANGER, padx=10, pady=5,
+                                         font=FONT, cursor="hand2",
+                                         activebackground=BORDER)
+        self.btn_ajouter_carte_util.pack(side="left")
 
         tkinter.Button(toolbar, text="Actualiser", command=lambda:charger_util(self),
                        bg=BG, fg=TEXT, relief="flat", bd=0,
@@ -424,39 +433,60 @@ class App(tkinter.Tk):
         win.geometry(f"+{x}+{y}")
 
 
-    def _ouvrir_scan_puis_modal(self):
+    def _ouvrir_scan_puis_modal(self, nature):
         """
         Étape 1 : fenêtre de scan.
         Étape 2 : dès que l'ID est reçu, ouvre _modal pré-remplie.
         """
-        fields_carte = [
-            ("id_badge",         "ID Badge"),
-            ("texte",      "Texte / libellé"),
-            ("id_util",    "ID Utilisateur"),
-        ]
 
-        def submit(data, win):
-            reponse = envoi_requete(ip=IP, port=5000,
-                                endpoint="/ajouter_une_carte", valeur=data)
-            messagebox.showinfo("Résultat", reponse, parent=win)
-            charger_carte(self)
-            win.destroy()
- 
-        def apres_scan(id_badge):
-            """
-            Fonction appelée automatiquement avec l'ID scanné en argument (id_badge).
-            Utilise cet ID comme identifiant de badge pour pré-remplir le formulaire d'ajout de carte.
-            """
-            self._modal(
-                title="Ajouter une carte",
-                fields=fields_carte,
-                on_submit=submit,        # ta fonction métier existante
-                prefill={"id_badge": id_badge}         # champ ID pré-rempli + readonly
-            )
+        if nature == "carte":
+            fields_carte = [
+                ("id_badge",         "ID Badge"),
+                ("texte",      "Texte / libellé"),
+                ("id_util",    "ID Utilisateur"),
+            ]
 
-        fenetre_scan(self, on_card_scanned=apres_scan)
+            def submit(data, win):
+                reponse = envoi_requete(ip=IP, port=5000,
+                                    endpoint="/ajouter_une_carte", valeur=data)
+                messagebox.showinfo("Résultat", reponse, parent=win)
+                charger_carte(self)
+                win.destroy()
+    
+            def apres_scan(id_badge):
+                """
+                Fonction appelée automatiquement avec l'ID scanné en argument (id_badge).
+                Utilise cet ID comme identifiant de badge pour pré-remplir le formulaire d'ajout de carte.
+                """
+                self._modal(
+                    title="Ajouter une carte",
+                    fields=fields_carte,
+                    on_submit=submit,        # ta fonction métier existante
+                    prefill={"id_badge": id_badge}         # champ ID pré-rempli + readonly
+                )
 
+            fenetre_scan_carte(self, on_card_scanned=apres_scan)
 
+        elif nature == "util":
+
+            # Récupère l'utilisateur sélectionné AVANT le scan
+            sel = self.arbre_util.selection()
+            if not sel:
+                messagebox.showwarning("Attention", "Sélectionnez d'abord un utilisateur.")
+                return
+            id_util = self.arbre_util.item(sel[0], "values")[0]
+
+            def apres_scan(id_badge):
+                # ✅ Pas de modal — on envoie directement la requête
+                reponse = envoi_requete(
+                    ip=IP, port=5000,
+                    endpoint=f"/ajouter_une_carte_a_util/{id_util}",
+                    valeur={"id_badge": id_badge}
+                )
+                messagebox.showinfo("Résultat", reponse)
+                charger_util(self)
+
+            fenetre_scan_util(self, on_card_scanned=apres_scan)  # ✅ scan la carte à assigner
 
 if __name__ == "__main__":
     app = App()

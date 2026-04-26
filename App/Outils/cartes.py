@@ -61,7 +61,7 @@ def supprimer_carte(self):
     messagebox.showinfo("Résultat", reponse)
     charger_carte(self)
 
-def fenetre_scan(self, on_card_scanned=None):
+def fenetre_scan_carte(self, on_card_scanned=None):
         win = tkinter.Toplevel(self)
         win.title("Scanner une carte")
         win.configure(bg=BG)

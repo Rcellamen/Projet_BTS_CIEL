@@ -1,6 +1,8 @@
 import tkinter
 from tkinter import messagebox, ttk
 import json
+import requests
+import threading
 
 from Outils.requete_api import envoi_requete
 from Outils.parametres import *
@@ -82,3 +84,75 @@ def supprimer_util(self):
     messagebox.showinfo("Résultat", reponse)
     charger_util(self)
 
+
+def ajouter_carte_util(self):
+    """Ajoute une carte à un utilisateur selectionné"""
+    sel = self.arbre_util.selection()
+    if not sel:
+        return
+    id_util = self.arbre_util.item(sel[0], "values")[0]
+    reponse = envoi_requete(ip=IP, port=5000, endpoint=f"/ajouter_une_carte_a_util/{id_util}")
+    messagebox.showinfo("Résultat", reponse)
+    charger_util(self)
+
+
+def fenetre_scan_util(self, on_card_scanned=None):
+        win = tkinter.Toplevel(self)
+        win.title("Scanner une carte")
+        win.configure(bg=BG)
+        win.resizable(False, False)
+        win.grab_set()
+
+        tkinter.Label(win, text="Scanner une carte", bg=BG, fg=TEXT,
+                    font=FONT_BOLD).pack(anchor="w", padx=20, pady=(16, 4))
+        tkinter.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=20)
+
+        body = tkinter.Frame(win, bg=BG, padx=20, pady=16)
+        body.pack(fill="both")
+
+        status_var = tkinter.StringVar(value="Veuillez approcher votre carte…")
+        tkinter.Label(body, textvariable=status_var,
+                    bg=BG, fg=TEXT_DIM, font=("Segoe UI", 9)).pack(pady=(0, 10))
+
+        cancelled = [False]  # flag mutable accessible dans le thread
+
+        def annuler():
+            cancelled[0] = True
+            win.destroy()
+
+        tkinter.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=20)
+        footer = tkinter.Frame(win, bg=BG, padx=20, pady=12)
+        footer.pack(fill="x")
+        tkinter.Button(footer, text="Annuler", command=annuler,
+                   bg=BG, fg=TEXT, relief="flat", bd=0,
+                   padx=10, pady=5, font=FONT,
+                   activebackground=BORDER, cursor="hand2").pack(side="right")
+
+        win.geometry("360x160")
+        win.update_idletasks()
+        x = self.winfo_x() + (self.winfo_width()  - win.winfo_width())  // 2
+        y = self.winfo_y() + (self.winfo_height() - win.winfo_height()) // 2
+        win.geometry(f"+{x}+{y}")
+
+        def lire_badge_thread():
+            try:
+                resp = requests.get(f"http://{IP}:5000/lire_badge", timeout=30)
+                result = resp.json()
+            except Exception as e:
+                result = None
+
+            if cancelled[0]:
+                return
+
+            def callback():
+                if not win.winfo_exists():
+                    return
+                if result and "id" in result:
+                    win.destroy()
+                    if on_card_scanned:
+                        on_card_scanned(result["id"])
+                else:
+                    status_var.set("Échec de la lecture, réessayez.")
+
+            win.after(0, callback)
+        threading.Thread(target=lire_badge_thread, daemon=True).start()
