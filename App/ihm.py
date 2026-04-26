@@ -265,7 +265,7 @@ class App(tkinter.Tk):
         self.arbre_util.pack(fill="both", expand=True)
         self.arbre_util.bind("<<TreeviewSelect>>", self._on_select)
 
-        charger_util
+        charger_util(self)
     
     # ────────────────────────────────────────────────────────────────────────
     #                           DASHBOARD

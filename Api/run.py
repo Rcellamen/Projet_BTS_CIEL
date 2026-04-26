@@ -71,13 +71,6 @@ def afficher_cartes():
     cartes = Badge.query.all()
     return {"cartes": [{"id": carte.id_badge, "texte": carte.val_badge, "id_util": carte.id_utilisateur, "derniere_connexion": carte.der_connexion, "date_ajout": carte.date_ajout} for carte in cartes]}, 201
 
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    app.run(host="0.0.0.0", debug=True)
-
-
-
     # ────────────────────────────────────────────────────────────────────────
     #                       ROUTES UTILISATEUR
     # ────────────────────────────────────────────────────────────────────────
@@ -145,11 +138,17 @@ def supprimer_un_utilisateur(id):
 
 @app.route("/afficher_utilisateurs", methods=["GET"])
 def afficher_util():
-    util = Utilisateur.query.all()
-    return {"Utilisateurs": [{"identifiant": util.id, "nom": util.nom, "prenom": util.prenom, "badge": util.badges, "droits" : util.droits} for util in util]}, 201
-
-
-
+    utils = Utilisateur.query.all()
+    return {"utils": [
+        {
+            "id_util":  util.id_util,
+            "nom":      util.nom,
+            "prenom":   util.prenom,
+            "badges":   [b.id_badge for b in util.badges],
+            "droits":   util.droits
+        }
+        for util in utils
+    ]}, 200
 
 # ────────────────────────────────────────────────────────────────────────
 #                           TEST
@@ -159,7 +158,7 @@ def afficher_util():
 def test_PIR():
     return Lire_PIR()
 
-@app.route("/test_PIR", methods=["GET"])
+@app.route("/test_LB", methods=["GET"])
 def test_LB():
     return lire_badge()
 

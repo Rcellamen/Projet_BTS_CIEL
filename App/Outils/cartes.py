@@ -27,17 +27,6 @@ def charger_carte(self):
         messagebox.showerror("Erreur",
                              f"Impossible de récupérer les cartes :\n{reponse}")
         
-# def ajouter_carte(self):
-#     """Ouvre le formulaire d'ajout d'une nouvelle carte."""
-#     def submit(data, win):
-#         reponse = envoi_requete(ip=IP, port=5000,
-#                            endpoint="/ajouter_une_carte", valeur=data)
-#         messagebox.showinfo("Résultat", reponse, parent=win)
-#         self.charger_carte()
-#         win.destroy()
-#     # self._modal("Ajouter une carte",
-#     #             [("id_badge", "ID Badge"), ("texte", "Texte"),
-#     #              ("id_util", "ID Utilisateur")], submit)
     
 def modifier_carte(self):
     """Ouvre le formulaire de modification de la carte sélectionnée dans le tableau."""
@@ -53,7 +42,7 @@ def modifier_carte(self):
         messagebox.showinfo("Résultat", reponse, parent=win)        
         win.destroy()
         charger_carte(self)
-        
+
     self._modal("Modifier une carte",
                 [("id_badge", "ID Badge"), ("texte", "Texte"),
                  ("id_util", "ID Utilisateur")], submit, prefill=prefill)

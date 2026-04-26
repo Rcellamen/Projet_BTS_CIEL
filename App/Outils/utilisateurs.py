@@ -6,33 +6,36 @@ from Outils.requete_api import envoi_requete
 from Outils.parametres import *
 
 def charger_util(self):
-    """Récupère la liste des utilisateurs depuis la BDD et remplit le tableau."""
-    response = envoi_requete(ip=IP, port=5000, endpoint="/afficher_utilisateurs")
+    url = f"http://{IP}:5000/afficher_utilisateurs"
+    print(f"[DEBUG] URL appelée : {url}")
+    reponse = envoi_requete(ip=IP, port=5000, endpoint="/afficher_utilisateurs")
+    print(f"[DEBUG] Réponse : {reponse}")
     try:
-        parsed = json.loads(response)
-        self.donnee_util = parsed.get("utils", parsed) if isinstance(parsed, dict) else parsed
+        parsed = json.loads(reponse)
+        self.donnee_util = parsed.get("utils", [])
         self.arbre_util.delete(*self.arbre_util.get_children())
         for util in self.donnee_util:
             self.arbre_util.insert("", "end", values=(
-                util.get("id", ""),
-                util.get("nom", ""),
-                util.get("prenom", ""),
-                util.get("badges", ""),
-                util.get("droits", "")
+                util.get("id_util",  ""),
+                util.get("nom",      ""),
+                util.get("prenom",   ""),
+                util.get("badges",   ""),
+                util.get("droits",   "")
             ))
     except Exception:
         messagebox.showerror("Erreur",
-                             f"Impossible de récupérer les cartes :\n{response}")
+                             f"Impossible de récupérer les utilisateurs :\n{reponse}")
          
 
 
 def ajouter_util(self):
     def submit(data, win):
-        res = envoi_requete(ip=IP, port=5000,
+        reponse = envoi_requete(ip=IP, port=5000,
                            endpoint="/ajouter_un_utilisateur", valeur=data)
-        messagebox.showinfo("Résultat", res, parent=win)
-        charger_util(self)
+        messagebox.showinfo("Résultat", reponse, parent=win)
         win.destroy()
+        charger_util(self)
+
     self._modal("Ajouter un utilisateur",
                 [
                     ("id",     "ID Utilisateur"),
@@ -51,10 +54,10 @@ def modifier_util(self):
     vals = self.arbre_util.item(sel[0], "values")
     prefill = {"id": vals[0], "nom": vals[1], "prenom": vals[2], "badges" : vals[3], "droits" : vals[4]}
     def submit(data, win):
-        res = envoi_requete(ip=IP, port=5000,
+        reponse = envoi_requete(ip=IP, port=5000,
                            endpoint=f"/modifier_un_utilisateur/{data['id']}",
                            valeur=data)
-        messagebox.showinfo("Résultat", res, parent=win)
+        messagebox.showinfo("Résultat", reponse, parent=win)
         self.charger_util()
         win.destroy()
     self._modal("Modifier un utilisateur",
@@ -69,8 +72,8 @@ def supprimer_util(self):
     id_util = self.arbre_carte.item(sel[0], "values")[0]
     if not messagebox.askyesno("Confirmer", f"Supprimer l'utilisateur {id_util} ?"):
         return
-    res = envoi_requete(ip=IP, port=5000,
+    reponse = envoi_requete(ip=IP, port=5000,
                        endpoint=f"/supprimer_un_utilisateur/{id_util}")
-    messagebox.showinfo("Résultat", res)
+    messagebox.showinfo("Résultat", reponse)
     self.charger_util()
 
