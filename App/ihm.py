@@ -112,9 +112,16 @@ class App(tkinter.Tk):
 
     def _on_select(self, event=None):
         """Active les boutons Modifier et Supprimer lorsqu'une carte est sélectionnée."""
-        state = "normal" if self.arbre_carte.selection() else "disabled"
-        self.btn_modifier.configure(state=state)
-        self.btn_supprimer.configure(state=state)
+        widget = event.widget
+        state = "normal" if widget.selection() else "disabled"
+
+        if hasattr(self, "arbre_carte") and widget == self.arbre_carte:
+            self.btn_modifier.configure(state=state)
+            self.btn_supprimer.configure(state=state)
+            
+        elif hasattr(self, "arbre_util") and widget == self.arbre_util:
+            self.btn_modifier.configure(state=state)
+            self.btn_supprimer.configure(state=state)
     
     def _testPIR(self):
         try:
@@ -137,7 +144,7 @@ class App(tkinter.Tk):
 
     def _affichage_onglet_carte(self):
         """Affiche l'onglet de gestion des cartes avec le tableau et la barre d'outils."""
-        self._set_active_nav("cards")
+        self._set_active_nav("cartes")
         self._clear_content()
         self._page_title("Gestion des cartes")
         # Barre d'outils
@@ -206,7 +213,7 @@ class App(tkinter.Tk):
         """Affiche l'onglet des utilisateurs."""
         self._set_active_nav("utilisateurs")
         self._clear_content()
-        self._page_title("Utilisateurs")
+        self._page_title("Gestion des utilisateurs")
 
         # Barre d'outils
         toolbar = tkinter.Frame(self.content, bg=BG)
@@ -352,6 +359,8 @@ class App(tkinter.Tk):
                     widget.pack(fill="x", ipady=5)
                     if prefill and key in prefill:
                         widget.insert(0, prefill[key])
+                    if key == "id_util":
+                        widget.config(state="readonly")
                     entries[key] = widget
 
             tkinter.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=20)

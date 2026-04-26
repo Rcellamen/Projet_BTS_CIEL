@@ -89,18 +89,22 @@ def ajouter_un_utilisateur():
     return {"Ajouté": "L'utilisateur a bien été ajouté"}, 201
 
 
-@app.route("/modifier_un_utilisateur/<id>", methods=["GET", "POST"])
-def modifier_un_utilisateur(id):
+@app.route("/modifier_un_utilisateur/<id_util>", methods=["GET", "POST"])
+def modifier_un_utilisateur(id_util):
     if  request.method == "GET":
-        util = Utilisateur.query.filter_by(id=id).first()
+        util = Utilisateur.query.filter_by(id_util=id_util).first()
 
         if util:    
-            return {"id": util.id, "nom": util.nom, "prenom": util.prenom, "badges": util.badges, "droit": util.droits}, 201
+            return {"id": util.id_util,
+                    "nom": util.nom,
+                    "prenom": util.prenom,
+                    "badges": util.badges,
+                    "droit": util.droits}, 201
     elif request.method == "POST":
-        util = Utilisateur.query.filter_by(id=id).first()
+        util = Utilisateur.query.filter_by(id_util=id_util).first()
         data = request.get_json()
-        if "id" in data:
-            util.id = data["id"]
+        if "id_util" in data:
+            util.id_util = data["id_util"]
         if "nom" in data:
             util.nom = data["nom"].replace("\x00", "").strip()
         if "prenom" in data:
@@ -112,9 +116,9 @@ def modifier_un_utilisateur(id):
     return {"error": "L'utilisateur n'existe pas"}, 404
 
 
-@app.route("/supprimer_un_utilisateur/<id>", methods=["GET"])
-def supprimer_un_utilisateur(id):
-    util = Utilisateur.query.filter_by(id=id)
+@app.route("/supprimer_un_utilisateur/<id_util>", methods=["GET"])
+def supprimer_un_utilisateur(id_util):
+    util = Utilisateur.query.filter_by(id_util=id_util)
     if util:
         db.session.delete(util)
         db.session.commit()
