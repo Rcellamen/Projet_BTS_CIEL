@@ -26,13 +26,6 @@ def ajouter_une_carte():
     else:
         return {"Erreur": "La carte existe déjà"}, 404
 
-@app.route("/lire_badge", methods=["GET"])
-def lire_badge():
-    if _badge_lock.locked():  # ← si une lecture est déjà en cours, on refuse
-        return {"Erreur": "Lecture déjà en cours"}, 429
-    id, text = Lire_Badge(False)
-    return {"id": str(id), "texte": text.strip()}, 200
-
 @app.route("/modifier_une_carte/<id_badge>", methods=["GET", "POST"])
 def modifier_une_carte(id_badge):
     if  request.method == "GET":
@@ -172,8 +165,20 @@ def afficher_util():
     ]}, 200
 
 # ────────────────────────────────────────────────────────────────────────
-#                           TEST
+#                           AUTRES
 # ────────────────────────────────────────────────────────────────────────
+
+@app.route("/lire_badge", methods=["GET"])
+def lire_badge():
+    if _badge_lock.locked():  # ← si une lecture est déjà en cours, on refuse
+        return {"Erreur": "Lecture déjà en cours"}, 429
+    id_badge, text = Lire_Badge(False)
+
+    carte = Badge.query.filter_by(id_badge=id_badge).first()
+    if carte:
+        carte.der_connexion = datetime.now()
+        db.session.commit()
+    return {"id" : str(id_badge), "texte": text.strip()}, 200
 
 @app.route("/test_PIR", methods=["GET"])
 def test_PIR():
@@ -181,7 +186,15 @@ def test_PIR():
 
 @app.route("/test_LB", methods=["GET"])
 def test_LB():
-    return Lire_Badge()
+    if _badge_lock.locked():  # ← si une lecture est déjà en cours, on refuse
+        return {"Erreur": "Lecture déjà en cours"}, 429
+    id_badge, text = Lire_Badge(False)
+
+    carte = Badge.query.filter_by(id_badge=id_badge).first()
+    if carte:
+        carte.der_connexion = datetime.now()
+        db.session.commit()
+    return {"id" : str(id_badge), "dernière connexion": carte.der_connexion}, 200
 
 if __name__ == "__main__":
     with app.app_context():

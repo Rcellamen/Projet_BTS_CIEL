@@ -13,7 +13,7 @@ _badge_lock = threading.Lock()  # ← à mettre en haut du fichier serveur, hors
 def Lire_Badge(lecture_continue):
         reader = SimpleMFRC522()
         id = -1
-        text = ""
+        text= ""
         with _badge_lock:  # ← une seule lecture à la fois
             try:
                 if lecture_continue:
