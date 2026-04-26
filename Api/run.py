@@ -76,31 +76,17 @@ def afficher_cartes():
     # ────────────────────────────────────────────────────────────────────────
 
 
-@app.route("/ajouter_un_utilisateur/<id>", methods=["POST"])
+@app.route("/ajouter_un_utilisateur", methods=["POST"])
 def ajouter_un_utilisateur():
-    if not Utilisateur.query.filter_by(id=id).first():
-        util = Utilisateur.query.filter_by(id=id).first()
-        data = request.get_json()
-        if "id" in data:
-            util.id = data['id']
-
-        if "nom" in data:
-            util.nom = data['nom']
-
-        if "prenom" in data:
-            util.prenom = data['prenom']
-
-        if "badges" in data:
-            util.badges = data['badges']
-
-        if "droits" in data:
-            util.droits = data['droits']
-
-        db.session.add(util)
-        db.session.commit()
-        # Retourne un dictionnaire propre
-        return {"Ajouté": "L'utilisateur a bien été ajouté"}, 201
-    return {"Erreur" : "L'utilisateur n'a pas pu être ajouté"}, 404
+    data = request.get_json()
+    util = Utilisateur(
+        nom=data.get('nom', '').strip(),
+        prenom=data.get('prenom', '').strip(),
+        droits=data.get('droits', '')
+    )
+    db.session.add(util)
+    db.session.commit()
+    return {"Ajouté": "L'utilisateur a bien été ajouté"}, 201
 
 
 @app.route("/modifier_un_utilisateur/<id>", methods=["GET", "POST"])

@@ -7,9 +7,7 @@ from Outils.parametres import *
 
 def charger_util(self):
     url = f"http://{IP}:5000/afficher_utilisateurs"
-    print(f"[DEBUG] URL appelée : {url}")
     reponse = envoi_requete(ip=IP, port=5000, endpoint="/afficher_utilisateurs")
-    print(f"[DEBUG] Réponse : {reponse}")
     try:
         parsed = json.loads(reponse)
         self.donnee_util = parsed.get("utils", [])
@@ -32,16 +30,15 @@ def ajouter_util(self):
     def submit(data, win):
         reponse = envoi_requete(ip=IP, port=5000,
                            endpoint="/ajouter_un_utilisateur", valeur=data)
+        print(f"[DEBUG] reponse {reponse}")
         messagebox.showinfo("Résultat", reponse, parent=win)
         win.destroy()
         charger_util(self)
 
     self._modal("Ajouter un utilisateur",
                 [
-                    ("id",     "ID Utilisateur"),
                     ("nom",    "Nom"),
                     ("prenom", "Prenom"),
-                    ("Badges", "Cartes"),
                     ("droits", "Droits", "combo",          # ← type
                      ["-----", "AT (Accès total)", "AR (Accès restreint)"]),
                 ], submit)

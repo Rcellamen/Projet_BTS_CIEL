@@ -102,31 +102,21 @@ def fenetre_scan(self, on_card_scanned=None):
         def lire_badge_thread():
             try:
                 resp = requests.get(f"http://{IP}:5000/lire_badge", timeout=30)
-                print(f"[DEBUG] Réponse brute : {resp.text}")
                 result = resp.json()
-                print(f"[DEBUG] Result parsé : {result}")
             except Exception as e:
-                print(f"[DEBUG] Erreur thread : {type(e).__name__} → {e}")
                 result = None
-
-            print(f"[DEBUG] cancelled : {cancelled[0]}")
-            print(f"[DEBUG] on_card_scanned : {on_card_scanned}")
 
             if cancelled[0]:
                 return
 
             def callback():
-                print(f"[DEBUG] callback exécuté")
-                print(f"[DEBUG] win exists : {win.winfo_exists()}")
                 if not win.winfo_exists():
                     return
                 if result and "id" in result:
-                    print(f"[DEBUG] ID trouvé : {result['id']}, appel on_card_scanned")
                     win.destroy()
                     if on_card_scanned:
                         on_card_scanned(result["id"])
                 else:
-                    print(f"[DEBUG] Pas d'ID dans result : {result}")
                     status_var.set("Échec de la lecture, réessayez.")
 
             win.after(0, callback)
