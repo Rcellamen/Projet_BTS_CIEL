@@ -12,7 +12,7 @@ def envoi_requete(ip, port=80, endpoint="/", valeur=None):
     try:
         url = f"http://{ip}:{port}{endpoint}"
         if valeur is None:
-            return requests.get(url, timeout=5).text
-        return requests.post(url, timeout=5, json=valeur).text
+            return requests.get(url, timeout=30).text
+        return requests.post(url, timeout=30, json=valeur).text
     except requests.exceptions.RequestException as e:
         return f"Erreur: {e}"

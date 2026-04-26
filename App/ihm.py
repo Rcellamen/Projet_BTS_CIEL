@@ -57,7 +57,7 @@ class App(tkinter.Tk):
         self.content = tkinter.Frame(body, bg=BG)
         self.content.pack(side="left", fill="both", expand=True)
 
-        self.show_dashboard()
+        self._show_dashboard()
 
     def _create_sidebar(self, parent):
         """Crée la barre latérale avec les boutons de navigation et le bouton Quitter."""
@@ -71,9 +71,9 @@ class App(tkinter.Tk):
 
         self.nav_btns = {}
         for label, key, cmd in [
-            ("Accueil",      "dashboard", self.show_dashboard),
-            ("Gestion des cartes",       "cartes",    self.affichage_onglet_carte),
-            ("Gestion des utilisateurs", "utilisateurs", self.affichage_onglet_util),
+            ("Accueil",      "dashboard", self._show_dashboard),
+            ("Gestion des cartes",       "cartes",    self._affichage_onglet_carte),
+            ("Gestion des utilisateurs", "utilisateurs", self._affichage_onglet_util),
         ]:
             btn = tkinter.Button(sidebar, text=label, command=cmd,
                                  bg=SURFACE, fg=TEXT, font=FONT,
@@ -116,7 +116,7 @@ class App(tkinter.Tk):
         self.btn_modifier.configure(state=state)
         self.btn_supprimer.configure(state=state)
     
-    def testPIR(self):
+    def _testPIR(self):
         try:
             response = envoi_requete(ip=IP, port=5000, endpoint="/test_PIR")
             messagebox.showinfo("Test PIR", response)
@@ -124,11 +124,18 @@ class App(tkinter.Tk):
             messagebox.showerror("Erreur", f"Impossible de contacter le Raspberry : {e}")
 
 
+    def _testLB(self):
+        try:
+            reponse = envoi_requete(ip=IP, port=5000, endpoint= f"/test_LB")
+            messagebox.showinfo("Test LB", reponse)
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Impossible de lire le badge : {e}")
+    
 # ────────────────────────────────────────────────────────────────────────
 #                           ONGLET CARTE
 # ────────────────────────────────────────────────────────────────────────
 
-    def affichage_onglet_carte(self):
+    def _affichage_onglet_carte(self):
         """Affiche l'onglet de gestion des cartes avec le tableau et la barre d'outils."""
         self._set_active_nav("cards")
         self._clear_content()
@@ -137,19 +144,21 @@ class App(tkinter.Tk):
         toolbar = tkinter.Frame(self.content, bg=BG)
         toolbar.pack(fill="x", padx=24, pady=(0, 8))
 
-        self.btn_ajouter = tkinter.Button(toolbar, text="Ajouter", command=lambda:self._fenetre_scan("Veuillez badger une carte", [""], ),
-                       bg=ACCENT, fg="white", relief="flat", bd=0,
-                       padx=10, pady=5, font=FONT,
-                       activebackground="#1d4ed8", activeforeground="white",
-                       cursor="hand2").pack(side="left", padx=(0, 6))
+        self.btn_ajouter = tkinter.Button(
+            toolbar,text="Ajouter", command=self._ouvrir_scan_puis_modal,
+            bg=ACCENT, fg="white", relief="flat", bd=0,
+            padx=10, pady=5, font=FONT,
+            activebackground="#1d4ed8", activeforeground="white",
+            cursor="hand2").pack(side="left", padx=(0, 6))
         
         self.btn_modifier = tkinter.Button(toolbar, text="Modifier",
-                        command=modifier_carte,
+                        command=lambda:modifier_carte(self),
                         state="disabled", relief="flat", bd=0,
                         bg=BG, fg=TEXT, padx=10, pady=5,
                         font=FONT, cursor="hand2",
                         activebackground=BORDER)
         self.btn_modifier.pack(side="left", padx=(0, 6))
+
         self.btn_supprimer = tkinter.Button(toolbar, text="Supprimer",
                                          command=lambda:supprimer_carte(self),
                                          state="disabled", relief="flat", bd=0,
@@ -157,6 +166,7 @@ class App(tkinter.Tk):
                                          font=FONT, cursor="hand2",
                                          activebackground=BORDER)
         self.btn_supprimer.pack(side="left")
+        
         self.btn_charger = tkinter.Button(toolbar, text="Actualiser", command=lambda:charger_carte(self),
                        bg=BG, fg=TEXT, relief="flat", bd=0,
                        padx=10, pady=5, font=FONT,
@@ -192,7 +202,7 @@ class App(tkinter.Tk):
 #                           ONGLET UTIL
 # ────────────────────────────────────────────────────────────────────────
 
-    def affichage_onglet_util(self):
+    def _affichage_onglet_util(self):
         """Affiche l'onglet des utilisateurs."""
         self._set_active_nav("utilisateurs")
         self._clear_content()
@@ -201,7 +211,7 @@ class App(tkinter.Tk):
         # Barre d'outils
         toolbar = tkinter.Frame(self.content, bg=BG)
         toolbar.pack(fill="x", padx=24, pady=(0, 8))
-
+ 
         self.btn_ajouter = tkinter.Button(toolbar, text="Ajouter", command=lambda:ajouter_util(self),
                        bg=ACCENT, fg="white", relief="flat", bd=0,
                        padx=10, pady=5, font=FONT,
@@ -261,7 +271,7 @@ class App(tkinter.Tk):
     #                           DASHBOARD
     # ────────────────────────────────────────────────────────────────────────
 
-    def show_dashboard(self):
+    def _show_dashboard(self):
         """Affiche la page d'accueil avec les informations de connexion au serveur."""
         self._set_active_nav("dashboard")
         self._clear_content()
@@ -274,41 +284,21 @@ class App(tkinter.Tk):
         frame.pack(fill="both", expand=True)
 
         tkinter.Button(frame, text="Test capteur PIR",
-            command=self.testPIR,
+            command=self._testPIR,
             relief="flat", bd=0,
             background="#1d4ed8", fg="#FFFFFF", padx=10, pady=5,
             font=FONT, cursor="hand2").pack(expand=True)
 
+
+        tkinter.Button(frame, text="Test lecteur de badge",
+            command=self._testLB,
+            relief="flat", bd=0,
+            background="#1d4ed8", fg="#FFFFFF", padx=10, pady=5,
+            font=FONT, cursor="hand2").pack(expand=True)
     # ────────────────────────────────────────────────────────────────────────
     #                    FENETRE SCAN CARTE
     # ────────────────────────────────────────────────────────────────────────
-    def _fenetre_scan(self, title, fields, on_submit, prefill=None):
-        """
-        Crée une fenêtre qui demande scanner une carte
-
-        Paramètres :
-        - title      : titre affiché en haut de la fenêtre
-        - fields     : liste de tuples (clé, libellé) définissant les champs
-        - on_submit  : fonction(data, win) appelée à la validation
-        - prefill    : dictionnaire optionnel pour pré-remplir les champs
-        """
-        win = tkinter.Toplevel(self)
-        win.title(title)
-        win.configure(bg=BG)
-        win.resizable(True, True)
-        win.grab_set()
-
-        tkinter.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=20)
-
-        body = tkinter.Frame(win, bg=BG, padx=20, pady=9)
-        body.pack(fill="both")
-
-        entries = {}
-
-        tkinter.Label(body, text="Veuillez scanner une carte", bg=BG, fg=TEXT_DIM,
-                              font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 2), command=ajouter_carte)
-   
-
+    
     # ────────────────────────────────────────────────────────────────────────
     #                    FENETRE AJOUTER/MODIFIER
     # ────────────────────────────────────────────────────────────────────────
@@ -338,7 +328,7 @@ class App(tkinter.Tk):
 
         entries = {}
 
-        if title == ("Ajouter un utilisateur" or "Modifier un utilisateur"):
+        if title in ("Ajouter un utilisateur", "Modifier un utilisateur"):
 
             for field in fields:
                 key, label, *opts = field  # dépaquète le tuple (2 ou 4 éléments)
@@ -382,7 +372,7 @@ class App(tkinter.Tk):
 
         elif title in ("Ajouter une carte", "Modifier une carte"):
 
-            for i, field in enumerate(fields):
+            for field in fields:
                 key, label, *opts = field  # dépaquète le tuple (2 ou 4 éléments)
                 widget_type = opts[0] if opts else "entry"
                 choices     = opts[1] if len(opts) > 1 else []
@@ -398,8 +388,8 @@ class App(tkinter.Tk):
                 widget.pack(fill="x", ipady=5)
                 if prefill and key in prefill:
                     widget.insert(0, prefill[key])
-                if i == 0:
-                    widget.config(state= "readonly")
+                if key == "id_badge":
+                    widget.config(state="readonly")
                 entries[key] = widget
 
         tkinter.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=20)
@@ -423,6 +413,40 @@ class App(tkinter.Tk):
         x = self.winfo_x() + (self.winfo_width()  - win.winfo_width())  // 2
         y = self.winfo_y() + (self.winfo_height() - win.winfo_height()) // 2
         win.geometry(f"+{x}+{y}")
+
+
+    def _ouvrir_scan_puis_modal(self):
+        """
+        Étape 1 : fenêtre de scan.
+        Étape 2 : dès que l'ID est reçu, ouvre _modal pré-remplie.
+        """
+        fields_carte = [
+            ("id_badge",         "ID Badge"),
+            ("texte",      "Texte / libellé"),
+            ("id_util",    "ID Utilisateur"),
+        ]
+
+        def submit(data, win):
+            reponse = envoi_requete(ip=IP, port=5000,
+                                endpoint="/ajouter_une_carte", valeur=data)
+            messagebox.showinfo("Résultat", reponse, parent=win)
+            charger_carte(self)
+            win.destroy()
+ 
+        def apres_scan(id_badge):
+            """
+            Fonction appelée automatiquement avec l'ID scanné en argument (id_badge).
+            Utilise cet ID comme identifiant de badge pour pré-remplir le formulaire d'ajout de carte.
+            """
+            self._modal(
+                title="Ajouter une carte",
+                fields=fields_carte,
+                on_submit=submit,        # ta fonction métier existante
+                prefill={"id_badge": id_badge}         # champ ID pré-rempli + readonly
+            )
+
+        fenetre_scan(self, on_card_scanned=apres_scan)
+
 
 
 if __name__ == "__main__":
