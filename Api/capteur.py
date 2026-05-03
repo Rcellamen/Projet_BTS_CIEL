@@ -14,7 +14,7 @@ def Lire_Badge(lecture_continue):
         reader = SimpleMFRC522()
         id = -1
         text= ""
-        with _badge_lock:  # ← une seule lecture à la fois
+        with _badge_lock:
             try:
                 if lecture_continue:
                     while True:
