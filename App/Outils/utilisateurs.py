@@ -112,7 +112,7 @@ def fenetre_scan_util(self, on_card_scanned=None):
 
         status_var = tkinter.StringVar(value="Veuillez approcher votre carte…")
         tkinter.Label(body, textvariable=status_var,
-                    bg=BG, fg=TEXT_DIM, font=("Segoe UI", 9)).pack(pady=(0, 10))
+                    bg=BG, fg=TEXT_DIM, font=FONT_SMALL).pack(pady=(0, 10))
 
         cancelled = [False]  # flag mutable accessible dans le thread
 
@@ -125,7 +125,7 @@ def fenetre_scan_util(self, on_card_scanned=None):
         footer.pack(fill="x")
         tkinter.Button(footer, text="Annuler", command=annuler,
                    bg=BG, fg=TEXT, relief="flat", bd=0,
-                   padx=10, pady=5, font=FONT,
+                   padx=10, pady=5, font=FONT_UI,
                    activebackground=BORDER, cursor="hand2").pack(side="right")
 
         win.geometry("360x160")

@@ -52,12 +52,12 @@ def supprimer_carte(self):
     sel = self.arbre_carte.selection()
     if not sel:
         return
-    card_id = self.arbre_carte.item(sel[0], "values")[0]
-    print(card_id, sel)
-    if not messagebox.askyesno("Confirmer", f"Supprimer la carte {card_id} ?"):
+    id_carte = self.arbre_carte.item(sel[0], "values")[0]
+    print(id_carte, sel)
+    if not messagebox.askyesno("Confirmer", f"Supprimer la carte {id_carte} ?"):
         return
     reponse = envoi_requete(ip=IP, port=5000,
-                       endpoint=f"/supprimer_une_carte/{card_id}")
+                       endpoint=f"/supprimer_une_carte/{id_carte}")
     messagebox.showinfo("Résultat", reponse)
     charger_carte(self)
 
@@ -77,7 +77,7 @@ def fenetre_scan_carte(self, on_card_scanned=None):
 
         status_var = tkinter.StringVar(value="Veuillez approcher votre carte…")
         tkinter.Label(body, textvariable=status_var,
-                    bg=BG, fg=TEXT_DIM, font=("Segoe UI", 9)).pack(pady=(0, 10))
+                    bg=BG, fg=TEXT_DIM, font=FONT_SMALL).pack(pady=(0, 10))
 
         cancelled = [False]  # flag mutable accessible dans le thread
 
@@ -90,7 +90,7 @@ def fenetre_scan_carte(self, on_card_scanned=None):
         footer.pack(fill="x")
         tkinter.Button(footer, text="Annuler", command=annuler,
                    bg=BG, fg=TEXT, relief="flat", bd=0,
-                   padx=10, pady=5, font=FONT,
+                   padx=10, pady=5, font=FONT_UI,
                    activebackground=BORDER, cursor="hand2").pack(side="right")
 
         win.geometry("360x160")
