@@ -1,3 +1,13 @@
+"""
+Outils dédiés à la gestion des utilisateurs côté IHM.
+
+Contient :
+    - Les opérations CRUD sur les utilisateurs (chargement, ajout, modification,
+      suppression).
+    - La fenêtre modale de scan de carte utilisée pour assigner un badge à un
+      utilisateur déjà sélectionné.
+"""
+
 import tkinter
 from tkinter import messagebox, ttk
 import json
@@ -8,8 +18,8 @@ from Outils.requete_api import envoi_requete
 from Outils.parametres import *
 
 def charger_util(self):
-    url = f"http://{IP}:5000/afficher_utilisateurs"
-    reponse = envoi_requete(ip=IP, port=5000, endpoint="/afficher_utilisateurs")
+    """Récupère la liste des utilisateurs depuis l'API et remplit le tableau."""
+    reponse = envoi_requete(RESEAU["IP"], port=5000, endpoint="/afficher_utilisateurs")
     try:
         parsed = json.loads(reponse)
         self.donnee_util = parsed.get("utils", [])
@@ -29,10 +39,11 @@ def charger_util(self):
 
 
 def ajouter_util(self):
+    """Ouvre le formulaire de création d'un nouvel utilisateur."""
     def submit(data, win):
-        reponse = envoi_requete(ip=IP, port=5000,
+        """Envoie la création de l'utilisateur à l'API et rafraîchit la liste."""
+        reponse = envoi_requete(RESEAU["IP"], port=5000,
                            endpoint="/ajouter_un_utilisateur", valeur=data)
-        print(f"[DEBUG] reponse {reponse}")
         messagebox.showinfo("Résultat", reponse, parent=win)
         win.destroy()
         charger_util(self)
@@ -53,7 +64,8 @@ def modifier_util(self):
     vals = self.arbre_util.item(sel[0], "values")
     prefill = {"id_util": vals[0], "nom": vals[1], "prenom": vals[2], "badges" : vals[3], "droits" : vals[4]}
     def submit(data, win):
-        reponse = envoi_requete(ip=IP, port=5000,
+        """Envoie la modification de l'utilisateur à l'API et rafraîchit la liste."""
+        reponse = envoi_requete(RESEAU["IP"], port=5000,
                            endpoint=f"/modifier_un_utilisateur/{data['id_util']}",
                            valeur=data)
         messagebox.showinfo("Résultat", reponse, parent=win)
@@ -79,7 +91,7 @@ def supprimer_util(self):
     id_util = self.arbre_util.item(sel[0], "values")[0]
     if not messagebox.askyesno("Confirmer", f"Supprimer l'utilisateur {id_util} ?"):
         return
-    reponse = envoi_requete(ip=IP, port=5000,
+    reponse = envoi_requete(RESEAU["IP"], port=5000,
                        endpoint=f"/supprimer_un_utilisateur/{id_util}")
     messagebox.showinfo("Résultat", reponse)
     charger_util(self)
@@ -91,12 +103,20 @@ def ajouter_carte_util(self):
     if not sel:
         return
     id_util = self.arbre_util.item(sel[0], "values")[0]
-    reponse = envoi_requete(ip=IP, port=5000, endpoint=f"/ajouter_une_carte_a_util/{id_util}")
+    reponse = envoi_requete(RESEAU["IP"], port=5000, endpoint=f"/ajouter_une_carte_a_util/{id_util}")
     messagebox.showinfo("Résultat", reponse)
     charger_util(self)
 
 
 def fenetre_scan_util(self, on_card_scanned=None):
+        """
+        Ouvre la fenêtre 'Scanner une carte' utilisée dans le flux d'assignation
+        d'un badge à un utilisateur. Le callback `on_card_scanned` reçoit
+        l'id de la carte lue ; il est ensuite responsable de vérifier si la carte
+        existe en base et d'enchaîner avec la modale appropriée.
+
+        :param on_card_scanned: callback recevant l'id de la carte scannée.
+        """
         win = tkinter.Toplevel(self)
         win.title("Scanner une carte")
         win.configure(bg=BG)
@@ -117,7 +137,16 @@ def fenetre_scan_util(self, on_card_scanned=None):
         cancelled = [False]  # flag mutable accessible dans le thread
 
         def annuler():
+            """
+            Annule la demande de scan et ferme la fenêtre.
+            Tente aussi de libérer le verrou côté API pour ne pas bloquer
+            les futures lectures.
+            """
             cancelled[0] = True
+            try:
+                requests.post(f"http://{RESEAU['IP']}:5000/kill_thread", timeout=2)
+            except Exception:
+                pass
             win.destroy()
 
         tkinter.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=20)
@@ -135,24 +164,39 @@ def fenetre_scan_util(self, on_card_scanned=None):
         win.geometry(f"+{x}+{y}")
 
         def lire_badge_thread():
+            """Thread d'arrière-plan : appelle `/lire_badge` puis remet la
+            main au thread Tkinter via `win.after`. Détaille la cause de l'échec."""
+            result = None
+            erreur = None
             try:
-                resp = requests.get(f"http://{IP}:5000/lire_badge", timeout=30)
-                result = resp.json()
+                resp = requests.get(f"http://{RESEAU['IP']}:5000/lire_badge", timeout=60)
+                try:
+                    result = resp.json()
+                except ValueError:
+                    erreur = f"Réponse non-JSON (HTTP {resp.status_code})"
             except Exception as e:
-                result = None
+                erreur = str(e)
 
             if cancelled[0]:
                 return
 
             def callback():
+                """Met à jour la fenêtre dans le thread principal Tkinter."""
                 if not win.winfo_exists():
                     return
-                if result and "id" in result:
+                if result and "id" in result and result["id"] not in (None, "-1", -1):
                     win.destroy()
                     if on_card_scanned:
                         on_card_scanned(result["id"])
+                elif result and "Erreur" in result:
+                    status_var.set(
+                        f"Échec : {result['Erreur']}.\n"
+                        "Cliquez sur 'Réinitialiser le lecteur' depuis l'accueil."
+                    )
                 else:
-                    status_var.set("Échec de la lecture, réessayez.")
+                    status_var.set(
+                        f"Échec de la lecture : {erreur or 'aucun badge détecté'}."
+                    )
 
             win.after(0, callback)
         threading.Thread(target=lire_badge_thread, daemon=True).start()

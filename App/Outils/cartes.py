@@ -1,3 +1,11 @@
+"""
+Outils dédiés à la gestion des cartes RFID côté IHM.
+
+Contient :
+    - Les opérations CRUD sur les cartes (chargement, modification, suppression).
+    - La fenêtre modale de scan de carte (utilisée pour ajouter une carte).
+"""
+
 import tkinter
 from tkinter import messagebox, ttk
 import json
@@ -6,12 +14,11 @@ import requests
 
 from Outils.requete_api import envoi_requete
 from Outils.parametres import *
- 
 
 
 def charger_carte(self):
     """Récupère la liste des cartes depuis le serveur et remplit le tableau."""
-    reponse = envoi_requete(ip=IP, port=5000, endpoint="/afficher_cartes")
+    reponse = envoi_requete(RESEAU["IP"], port=5000, endpoint="/afficher_cartes")
     try:
         parsed = json.loads(reponse)
         self.donnee_cartes = parsed.get("cartes", parsed) if isinstance(parsed, dict) else parsed
@@ -36,10 +43,11 @@ def modifier_carte(self):
     vals = self.arbre_carte.item(sel[0], "values")
     prefill = {"id_badge": vals[0], "texte": vals[1], "id_util": vals[2]}
     def submit(data, win):
-        reponse = envoi_requete(ip=IP, port=5000,
+        """Envoie la modification de la carte à l'API et rafraîchit la liste."""
+        reponse = envoi_requete(RESEAU["IP"], port=5000,
                            endpoint=f"/modifier_une_carte/{data['id_badge']}",
                            valeur=data)
-        messagebox.showinfo("Résultat", reponse, parent=win)        
+        messagebox.showinfo("Résultat", reponse, parent=win)
         win.destroy()
         charger_carte(self)
 
@@ -53,15 +61,20 @@ def supprimer_carte(self):
     if not sel:
         return
     id_carte = self.arbre_carte.item(sel[0], "values")[0]
-    print(id_carte, sel)
     if not messagebox.askyesno("Confirmer", f"Supprimer la carte {id_carte} ?"):
         return
-    reponse = envoi_requete(ip=IP, port=5000,
+    reponse = envoi_requete(RESEAU["IP"], port=5000,
                        endpoint=f"/supprimer_une_carte/{id_carte}")
     messagebox.showinfo("Résultat", reponse)
     charger_carte(self)
 
 def fenetre_scan_carte(self, on_card_scanned=None):
+        """
+        Ouvre une fenêtre 'Scanner une carte' qui interroge l'API en arrière-plan
+        et appelle `on_card_scanned(id_badge)` dès qu'un badge est lu.
+
+        :param on_card_scanned: callback recevant l'id de la carte scannée.
+        """
         win = tkinter.Toplevel(self)
         win.title("Scanner une carte")
         win.configure(bg=BG)
@@ -82,7 +95,16 @@ def fenetre_scan_carte(self, on_card_scanned=None):
         cancelled = [False]  # flag mutable accessible dans le thread
 
         def annuler():
+            """
+            Annule la demande de scan et ferme la fenêtre.
+            Tente aussi de libérer le verrou côté API (au cas où une lecture
+            précédente serait restée bloquée), pour ne pas bloquer la suivante.
+            """
             cancelled[0] = True
+            try:
+                requests.post(f"http://{RESEAU['IP']}:5000/kill_thread", timeout=2)
+            except Exception:
+                pass
             win.destroy()
 
         tkinter.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=20)
@@ -100,24 +122,44 @@ def fenetre_scan_carte(self, on_card_scanned=None):
         win.geometry(f"+{x}+{y}")
 
         def lire_badge_thread():
+            """
+            Thread d'arrière-plan qui interroge `/lire_badge` puis remet
+            la main au thread Tkinter pour la mise à jour visuelle.
+            Détaille la cause de l'échec (verrou bloqué, réseau, etc.).
+            """
+            result = None
+            erreur = None
             try:
-                resp = requests.get(f"http://{IP}:5000/lire_badge", timeout=30)
-                result = resp.json()
+                resp = requests.get(f"http://{RESEAU['IP']}:5000/lire_badge", timeout=60)
+                try:
+                    result = resp.json()
+                except ValueError:
+                    erreur = f"Réponse non-JSON (HTTP {resp.status_code})"
             except Exception as e:
-                result = None
+                erreur = str(e)
 
             if cancelled[0]:
                 return
 
             def callback():
+                """Met à jour la fenêtre dans le thread principal Tkinter."""
                 if not win.winfo_exists():
                     return
-                if result and "id" in result:
+                if result and "id" in result and result["id"] not in (None, "-1", -1):
                     win.destroy()
                     if on_card_scanned:
                         on_card_scanned(result["id"])
+                elif result and "Erreur" in result:
+                    # Cas typique : verrou bloqué (HTTP 429)
+                    status_var.set(
+                        f"Échec : {result['Erreur']}.\n"
+                        "Cliquez sur 'Réinitialiser le lecteur' depuis l'accueil."
+                    )
                 else:
-                    status_var.set("Échec de la lecture, réessayez.")
+                    status_var.set(
+                        f"Échec de la lecture : {erreur or 'aucun badge détecté'}."
+                    )
 
             win.after(0, callback)
-        threading.Thread(target=lire_badge_thread, daemon=True).start()    
+        threading.Thread(target=lire_badge_thread, daemon=True).start()
+
