@@ -300,6 +300,28 @@ class App(ctk.CTk):
             font=FONT_BOLD, text_color=TEXT_DIM)
         self.alarme_label.pack(side="left", padx=(8, 4))
 
+        # ── Sélecteur d'heure simulée (partagé par PIR et Porte) ──────────
+        heure_card = ctk.CTkFrame(outer, fg_color=SURFACE, corner_radius=10,
+                                  border_width=1, border_color=BORDER)
+        heure_card.pack(fill="x", pady=(0, 16))
+        heure_inner = ctk.CTkFrame(heure_card, fg_color="transparent")
+        heure_inner.pack(padx=20, pady=12, anchor="w")
+
+        ctk.CTkLabel(heure_inner, text="🕐 Heure simulée :",
+                     font=FONT_BOLD, text_color=TEXT).pack(side="left")
+        self.heure_simulee = ctk.StringVar(value="12")
+        ctk.CTkComboBox(heure_inner, variable=self.heure_simulee,
+            values=[f"{h:02d}" for h in range(24)],
+            font=FONT_UI, fg_color=BG, text_color=TEXT,
+            button_color=BORDER, button_hover_color=ACCENT_SOFT,
+            border_color=BORDER, dropdown_fg_color=SURFACE,
+            dropdown_text_color=TEXT, dropdown_hover_color=ACCENT_SOFT,
+            state="readonly", width=90, height=32
+        ).pack(side="left", padx=(12, 24))
+        ctk.CTkLabel(heure_inner,
+            text="Horaires de travail : 07h00 – 20h00 — hors plage → alarme",
+            font=FONT_SMALL, text_color=TEXT_DIM).pack(side="left")
+
         # Titre section
         ctk.CTkLabel(outer, text="Tests matériel", font=FONT_BOLD,
                      text_color=TEXT_DIM).pack(anchor="w", pady=(0, 10))
@@ -339,35 +361,36 @@ class App(ctk.CTk):
             state="readonly", height=32
         ).pack(fill="x", padx=20)
 
-        # Zone de résultats
+        # Zone de résultats (texte centré)
         self.rfid_result = ctk.CTkFrame(card, fg_color=BG, corner_radius=7,
                                         border_width=1, border_color=BORDER)
         self.rfid_result.pack(fill="x", padx=20, pady=(14, 8))
         self.rfid_badge_lbl = ctk.CTkLabel(self.rfid_result, text="N° badge : —",
-            font=FONT_UI, text_color=TEXT)
-        self.rfid_badge_lbl.pack(anchor="w", padx=12, pady=(10, 2))
+            font=FONT_UI, text_color=TEXT, anchor="center", justify="center")
+        self.rfid_badge_lbl.pack(fill="x", padx=12, pady=(10, 2))
         self.rfid_user_lbl = ctk.CTkLabel(self.rfid_result, text="Propriétaire : —",
-            font=FONT_UI, text_color=TEXT)
-        self.rfid_user_lbl.pack(anchor="w", padx=12, pady=(0, 2))
+            font=FONT_UI, text_color=TEXT, anchor="center", justify="center")
+        self.rfid_user_lbl.pack(fill="x", padx=12, pady=(0, 2))
         self.rfid_status_lbl = ctk.CTkLabel(self.rfid_result, text="Statut : —",
-            font=FONT_BIG, text_color=TEXT_DIM)
-        self.rfid_status_lbl.pack(anchor="w", padx=12, pady=(4, 10))
+            font=FONT_BIG, text_color=TEXT_DIM,
+            anchor="center", justify="center")
+        self.rfid_status_lbl.pack(fill="x", padx=12, pady=(4, 10))
 
-        # Ligne de boutons : Lancer le test + Réinitialiser
+        # Ligne de boutons centrés : Réinitialiser + Lancer le test
         boutons = ctk.CTkFrame(card, fg_color="transparent")
-        boutons.pack(fill="x", padx=20, pady=(4, 16))
+        boutons.pack(pady=(4, 16))
         ctk.CTkButton(boutons, text="↻ Réinitialiser",
             command=self._reset_lecteur,
             fg_color=SURFACE, hover_color=ACCENT_SOFT,
             text_color=TEXT_DIM, font=FONT_SMALL,
             border_width=1, border_color=BORDER,
-            height=32, corner_radius=7, cursor="hand2"
-        ).pack(side="left")
+            height=34, corner_radius=7, cursor="hand2"
+        ).pack(side="left", padx=4)
         ctk.CTkButton(boutons, text="Lancer le test", command=self._test_rfid,
             fg_color=ACCENT, hover_color="#1d4ed8",
             text_color="white", font=FONT_UI,
-            height=32, corner_radius=7, cursor="hand2"
-        ).pack(side="right")
+            height=34, corner_radius=7, cursor="hand2"
+        ).pack(side="left", padx=4)
 
     # ── Panneau PIR ─────────────────────────────────────────────────────────
     def _panneau_pir(self, parent, col):
@@ -382,33 +405,23 @@ class App(ctk.CTk):
             font=FONT_SMALL, text_color=TEXT_DIM,
             wraplength=260, justify="left").pack(anchor="w", padx=20)
 
-        # Sélecteur d'heure simulée
-        ctk.CTkLabel(card, text="Heure simulée (0–23 h)", font=FONT_SMALL,
-                     text_color=TEXT_DIM).pack(anchor="w", padx=20, pady=(14, 2))
-        self.heure_simulee = ctk.StringVar(value="12")
-        ctk.CTkComboBox(card, variable=self.heure_simulee,
-            values=[f"{h:02d}" for h in range(24)],
-            font=FONT_UI, fg_color=BG, text_color=TEXT,
-            button_color=BORDER, button_hover_color=ACCENT_SOFT,
-            border_color=BORDER, dropdown_fg_color=SURFACE,
-            dropdown_text_color=TEXT, dropdown_hover_color=ACCENT_SOFT,
-            state="readonly", height=32
-        ).pack(fill="x", padx=20)
-
         # Résultat
         self.pir_status_lbl = ctk.CTkLabel(card, text="État : —",
-            font=FONT_BIG, text_color=TEXT_DIM)
-        self.pir_status_lbl.pack(anchor="w", padx=20, pady=(14, 4))
+            font=FONT_BIG, text_color=TEXT_DIM,
+            anchor="center", justify="center")
+        self.pir_status_lbl.pack(fill="x", padx=20, pady=(18, 4))
         self.pir_alarme_lbl = ctk.CTkLabel(card, text="",
             font=FONT_SMALL, text_color=TEXT_DIM,
-            wraplength=260, justify="left")
-        self.pir_alarme_lbl.pack(anchor="w", padx=20, pady=(0, 8))
+            wraplength=260, justify="center", anchor="center")
+        self.pir_alarme_lbl.pack(fill="x", padx=20, pady=(0, 8))
 
-        ctk.CTkButton(card, text="Lancer le test", command=self._test_pir,
+        # Bouton toggle centré : démarrer / arrêter la lecture en boucle
+        self.btn_pir = ctk.CTkButton(card, text="▶ Démarrer le test",
+            command=self._toggle_pir_test,
             fg_color=ACCENT, hover_color="#1d4ed8",
             text_color="white", font=FONT_UI,
-            height=32, corner_radius=7, cursor="hand2"
-        ).pack(anchor="e", padx=20, pady=(4, 16))
+            height=34, corner_radius=7, cursor="hand2")
+        self.btn_pir.pack(pady=(4, 16))
 
     # ── Panneau Porte ───────────────────────────────────────────────────────
     def _panneau_porte(self, parent, col):
@@ -419,30 +432,27 @@ class App(ctk.CTk):
 
         ctk.CTkLabel(card, text="Détecteur de porte", font=FONT_BOLD,
                      text_color=TEXT).pack(anchor="w", padx=20, pady=(18, 4))
-        ctk.CTkLabel(card, text="État du contact d'ouverture à l'instant T.",
+        ctk.CTkLabel(card, text="État du contact d'ouverture, lecture en continu.",
             font=FONT_SMALL, text_color=TEXT_DIM,
             wraplength=260, justify="left").pack(anchor="w", padx=20)
 
-        # Le panneau Porte utilise la même heure simulée que le PIR (cohérence)
-        ctk.CTkLabel(card,
-            text=f"Horaires de travail : {7:02d}h00 – {20:02d}h00",
-            font=FONT_SMALL, text_color=TEXT_DIM
-        ).pack(anchor="w", padx=20, pady=(14, 2))
-
         # Résultat
         self.porte_status_lbl = ctk.CTkLabel(card, text="État : —",
-            font=FONT_BIG, text_color=TEXT_DIM)
-        self.porte_status_lbl.pack(anchor="w", padx=20, pady=(14, 4))
+            font=FONT_BIG, text_color=TEXT_DIM,
+            anchor="center", justify="center")
+        self.porte_status_lbl.pack(fill="x", padx=20, pady=(18, 4))
         self.porte_alarme_lbl = ctk.CTkLabel(card, text="",
             font=FONT_SMALL, text_color=TEXT_DIM,
-            wraplength=260, justify="left")
-        self.porte_alarme_lbl.pack(anchor="w", padx=20, pady=(0, 8))
+            wraplength=260, justify="center", anchor="center")
+        self.porte_alarme_lbl.pack(fill="x", padx=20, pady=(0, 8))
 
-        ctk.CTkButton(card, text="Lire l'état", command=self._test_porte,
+        # Bouton toggle centré : démarrer / arrêter la lecture en boucle
+        self.btn_porte = ctk.CTkButton(card, text="▶ Démarrer le test",
+            command=self._toggle_porte_test,
             fg_color=ACCENT, hover_color="#1d4ed8",
             text_color="white", font=FONT_UI,
-            height=32, corner_radius=7, cursor="hand2"
-        ).pack(anchor="e", padx=20, pady=(4, 16))
+            height=34, corner_radius=7, cursor="hand2")
+        self.btn_porte.pack(pady=(4, 16))
 
     # ════════════════════════════════════════════════════════════════════════
     #                           ALARME (clignotement)
@@ -451,14 +461,32 @@ class App(ctk.CTk):
     def _start_alarme(self, motif=""):
         """
         Démarre le clignotement du voyant d'alarme sur le dashboard.
+        Idempotente : si l'alarme tourne déjà, on met juste à jour le motif
+        et on évite de relancer une seconde chaîne de clignotement.
 
         :param motif: texte affiché à côté du voyant pour expliquer la cause.
         """
-        self._alarme_active = True
         if hasattr(self, "alarme_label") and self.alarme_label.winfo_exists():
             self.alarme_label.configure(text=f"ALARME — {motif}" if motif else "ALARME",
                                         text_color=DANGER)
-        self._toggle_alarme()
+        if not self._alarme_active:
+            self._alarme_active = True
+            self._toggle_alarme()
+
+    def _update_alarme(self):
+        """
+        Décide si le voyant global doit clignoter en fonction des contributions
+        individuelles des capteurs PIR et porte (alarme = OU logique).
+        """
+        if self._pir_alarme or self._porte_alarme:
+            motifs = []
+            if self._pir_alarme:
+                motifs.append("mouvement")
+            if self._porte_alarme:
+                motifs.append("porte ouverte")
+            self._start_alarme(motif=" + ".join(motifs) + " hors horaires")
+        else:
+            self._stop_alarme()
 
     def _stop_alarme(self):
         """Arrête le clignotement du voyant d'alarme et le remet en état repos."""
@@ -585,37 +613,83 @@ class App(ctk.CTk):
         if motif:
             self.rfid_status_lbl.configure(text=f"{self.rfid_status_lbl.cget('text')}  ·  {motif}")
 
-    def _test_pir(self):
+    # ── PIR : toggle, boucle de polling, affichage ──────────────────────────
+
+    def _toggle_pir_test(self):
+        """Bascule entre démarrage et arrêt de la lecture PIR en continu."""
+        if self._pir_running:
+            self._stop_pir_loop()
+        else:
+            self._start_pir_loop()
+
+    def _start_pir_loop(self):
         """
-        Lance un test du capteur PIR : interroge l'API, puis applique la
-        logique d'alarme en fonction de l'heure simulée.
+        Démarre la lecture PIR en boucle (polling). Le bouton passe en rouge
+        « ⏹ Arrêter le test » jusqu'à ce que l'utilisateur reclique dessus.
         """
-        self.pir_status_lbl.configure(text="État : (lecture en cours…)",
+        self._pir_running = True
+        self.btn_pir.configure(text="⏹ Arrêter le test",
+            fg_color=DANGER, hover_color="#b91c1c")
+        self.pir_status_lbl.configure(text="État : (démarrage…)",
                                       text_color=TEXT_DIM)
         self.pir_alarme_lbl.configure(text="")
+        self._poll_pir()
+
+    def _stop_pir_loop(self):
+        """
+        Arrête la lecture PIR en boucle, remet le bouton en mode démarrage
+        et purge la contribution du PIR à l'alarme globale.
+        """
+        self._pir_running = False
+        self._pir_alarme  = False
+        if hasattr(self, "btn_pir") and self.btn_pir.winfo_exists():
+            self.btn_pir.configure(text="▶ Démarrer le test",
+                fg_color=ACCENT, hover_color="#1d4ed8")
+        if hasattr(self, "pir_status_lbl") and self.pir_status_lbl.winfo_exists():
+            self.pir_status_lbl.configure(text="État : —", text_color=TEXT_DIM)
+        if hasattr(self, "pir_alarme_lbl") and self.pir_alarme_lbl.winfo_exists():
+            self.pir_alarme_lbl.configure(text="")
+        self._update_alarme()
+
+    def _poll_pir(self):
+        """
+        Effectue une lecture PIR via l'API en arrière-plan puis planifie la
+        suivante (toutes les ~1 s) tant que la boucle est active.
+        """
+        if not self._pir_running:
+            return
 
         def worker():
+            """Appelle /test_PIR puis remet la main au thread Tkinter."""
             try:
                 resp = requests.get(
-                    f"http://{RESEAU['IP']}:5000/test_PIR", timeout=15)
+                    f"http://{RESEAU['IP']}:5000/test_PIR", timeout=10)
                 data = resp.json()
             except Exception as e:
                 data = {"_erreur": str(e)}
-            self.after(0, lambda: self._afficher_resultat_pir(data))
+
+            def callback():
+                """Affiche le résultat puis enchaîne avec le prochain poll."""
+                self._afficher_resultat_pir(data)
+                if self._pir_running:
+                    self.after(1000, self._poll_pir)
+            self.after(0, callback)
 
         threading.Thread(target=worker, daemon=True).start()
 
     def _afficher_resultat_pir(self, data):
-        """Met à jour l'affichage du panneau PIR et déclenche l'alarme si besoin."""
+        """Met à jour l'affichage du panneau PIR et met à jour l'alarme globale."""
         if "_erreur" in data:
             self.pir_status_lbl.configure(text="État : Erreur API",
                                           text_color=DANGER)
+            # Sur erreur, on coupe la boucle pour ne pas spammer l'utilisateur
             messagebox.showerror("Erreur",
                 f"Impossible de lire le PIR :\n{data['_erreur']}")
+            self._stop_pir_loop()
             return
 
         mouvement = bool(data.get("mouvement"))
-        heure = self.heure_simulee.get()
+        heure = self.heure_simulee.get() if hasattr(self, "heure_simulee") else "12"
         hors  = hors_horaires(heure)
 
         if mouvement:
@@ -625,12 +699,11 @@ class App(ctk.CTk):
             self.pir_status_lbl.configure(text="○ Aucun mouvement",
                                           text_color=SUCCESS)
 
-        # Logique d'alarme : mouvement + hors horaires → alarme
         if mouvement and hors:
             self.pir_alarme_lbl.configure(
                 text=f"⚠ Intrusion suspectée à {heure}h "
                      "(hors horaires de travail).", text_color=DANGER)
-            self._start_alarme(motif="mouvement hors horaires")
+            self._pir_alarme = True
         else:
             if mouvement:
                 self.pir_alarme_lbl.configure(
@@ -639,35 +712,82 @@ class App(ctk.CTk):
             else:
                 self.pir_alarme_lbl.configure(
                     text="Pas d'alarme.", text_color=TEXT_DIM)
-            self._stop_alarme()
+            self._pir_alarme = False
 
-    def _test_porte(self):
+        self._update_alarme()
+
+    # ── Porte : toggle, boucle de polling, affichage ────────────────────────
+
+    def _toggle_porte_test(self):
+        """Bascule entre démarrage et arrêt de la lecture porte en continu."""
+        if self._porte_running:
+            self._stop_porte_loop()
+        else:
+            self._start_porte_loop()
+
+    def _start_porte_loop(self):
         """
-        Lit l'état du détecteur d'ouverture de porte et applique la logique
-        d'alarme en fonction de l'heure simulée.
+        Démarre la lecture porte en boucle (polling). Le bouton passe en rouge
+        « ⏹ Arrêter le test » jusqu'à ce que l'utilisateur reclique dessus.
         """
-        self.porte_status_lbl.configure(text="État : (lecture en cours…)",
+        self._porte_running = True
+        self.btn_porte.configure(text="⏹ Arrêter le test",
+            fg_color=DANGER, hover_color="#b91c1c")
+        self.porte_status_lbl.configure(text="État : (démarrage…)",
                                         text_color=TEXT_DIM)
         self.porte_alarme_lbl.configure(text="")
+        self._poll_porte()
+
+    def _stop_porte_loop(self):
+        """
+        Arrête la lecture porte en boucle, remet le bouton en mode démarrage
+        et purge la contribution de la porte à l'alarme globale.
+        """
+        self._porte_running = False
+        self._porte_alarme  = False
+        if hasattr(self, "btn_porte") and self.btn_porte.winfo_exists():
+            self.btn_porte.configure(text="▶ Démarrer le test",
+                fg_color=ACCENT, hover_color="#1d4ed8")
+        if hasattr(self, "porte_status_lbl") and self.porte_status_lbl.winfo_exists():
+            self.porte_status_lbl.configure(text="État : —", text_color=TEXT_DIM)
+        if hasattr(self, "porte_alarme_lbl") and self.porte_alarme_lbl.winfo_exists():
+            self.porte_alarme_lbl.configure(text="")
+        self._update_alarme()
+
+    def _poll_porte(self):
+        """
+        Effectue une lecture porte via l'API en arrière-plan puis planifie la
+        suivante (toutes les ~1 s) tant que la boucle est active.
+        """
+        if not self._porte_running:
+            return
 
         def worker():
+            """Appelle /test_porte puis remet la main au thread Tkinter."""
             try:
                 resp = requests.get(
-                    f"http://{RESEAU['IP']}:5000/test_porte", timeout=15)
+                    f"http://{RESEAU['IP']}:5000/test_porte", timeout=10)
                 data = resp.json()
             except Exception as e:
                 data = {"_erreur": str(e)}
-            self.after(0, lambda: self._afficher_resultat_porte(data))
+
+            def callback():
+                """Affiche le résultat puis enchaîne avec le prochain poll."""
+                self._afficher_resultat_porte(data)
+                if self._porte_running:
+                    self.after(1000, self._poll_porte)
+            self.after(0, callback)
 
         threading.Thread(target=worker, daemon=True).start()
 
     def _afficher_resultat_porte(self, data):
-        """Met à jour l'affichage du panneau porte et déclenche l'alarme si besoin."""
+        """Met à jour l'affichage du panneau porte et met à jour l'alarme globale."""
         if "_erreur" in data:
             self.porte_status_lbl.configure(text="État : Erreur API",
                                             text_color=DANGER)
             messagebox.showerror("Erreur",
                 f"Impossible de lire la porte :\n{data['_erreur']}")
+            self._stop_porte_loop()
             return
 
         ouverte = bool(data.get("ouverte"))
@@ -681,12 +801,11 @@ class App(ctk.CTk):
             self.porte_status_lbl.configure(text="🚪 Porte Fermée",
                                             text_color=SUCCESS)
 
-        # Logique d'alarme : porte ouverte + hors horaires → alarme
         if ouverte and hors:
             self.porte_alarme_lbl.configure(
                 text=f"⚠ Porte ouverte à {heure}h "
                      "(hors horaires de travail).", text_color=DANGER)
-            self._start_alarme(motif="porte ouverte hors horaires")
+            self._porte_alarme = True
         else:
             if ouverte:
                 self.porte_alarme_lbl.configure(
@@ -695,7 +814,9 @@ class App(ctk.CTk):
             else:
                 self.porte_alarme_lbl.configure(
                     text="Pas d'alarme.", text_color=TEXT_DIM)
-            self._stop_alarme()
+            self._porte_alarme = False
+
+        self._update_alarme()
 
     # ════════════════════════════════════════════════════════════════════════
     #                           ONGLET CARTE
