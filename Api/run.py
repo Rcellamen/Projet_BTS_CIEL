@@ -380,11 +380,11 @@ def scanner_acces(mode):
     mode = (mode or "").lower().strip()
     if mode == "libre":
         autorise = True
-        motif = "Accès libre — tout badge connu autorisé"
+        motif = "Droit AL - Accès autorisé"
     else:  # 'restreint' ou tout autre valeur par défaut
         autorise = util.droits.startswith("AT")
-        motif = ("Droit AT — accès total" if autorise
-                 else "Droit insuffisant pour accès restreint")
+        motif = ("Droit AT - Accès autorisé" if autorise
+                 else "Accès refusé - Droits insuffisant")
 
     return {
         "id_badge": str(id_badge),

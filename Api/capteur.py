@@ -5,7 +5,6 @@ Capteurs gérés :
     - Lecteur RFID MFRC522 (badge)
     - Capteur de mouvement PIR (HC-SR501)
     - Détecteur d'ouverture de porte (contact sec / interrupteur magnétique)
-    - LED visuelle de signalisation
 
 Toutes les fonctions sont conçues pour être appelées depuis les routes Flask
 définies dans `run.py`.
@@ -19,7 +18,6 @@ from mfrc522 import SimpleMFRC522
 
 
 # ── Constantes des broches GPIO (numérotation BCM) ─────────────────────────
-LED_PIN   = 17      # LED de signalisation (sortie)
 PIR_PIN   = 4       # Capteur infrarouge passif (entrée)
 PORTE_PIN = 27      # Contact d'ouverture de porte (entrée, pull-up interne)
 
@@ -38,8 +36,6 @@ def _init_gpio():
     GPIO.setwarnings(False)
     GPIO.setup(PIR_PIN,   GPIO.IN)
     GPIO.setup(PORTE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(LED_PIN,   GPIO.OUT)
-
 
 def Lire_Badge(lecture_continue, timeout=30):
     """
@@ -97,8 +93,6 @@ def Lire_PIR():
     """
     Lit l'état instantané du capteur PIR (détection de mouvement).
 
-    Allume également la LED si un mouvement est détecté, l'éteint sinon.
-
     :return: tuple (json, code_http) :
         - {"statut": "ok", "mouvement": bool, "message": str} en cas de succès
         - {"statut": "erreur", "message": str} en cas d'exception
@@ -107,11 +101,6 @@ def Lire_PIR():
         _init_gpio()
 
         etat = GPIO.input(PIR_PIN)
-
-        if etat:
-            GPIO.output(LED_PIN, GPIO.HIGH)
-        else:
-            GPIO.output(LED_PIN, GPIO.LOW)
 
         return ({
             "statut": "ok",
@@ -144,6 +133,8 @@ def Lire_Porte():
         etat = GPIO.input(PORTE_PIN)
         ouverte = bool(etat)  # HIGH = porte ouverte (contact relâché)
 
+        print(f"{etat}")
+        
         return ({
             "statut": "ok",
             "ouverte": ouverte,
