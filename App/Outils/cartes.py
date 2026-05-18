@@ -24,11 +24,13 @@ def charger_carte(self):
         self.donnee_cartes = parsed.get("cartes", parsed) if isinstance(parsed, dict) else parsed
         self.arbre_carte.delete(*self.arbre_carte.get_children())
         for card in self.donnee_cartes:
+            print(card)
             self.arbre_carte.insert("", "end", values=(
                 card.get("id", ""),
                 card.get("texte", ""),
                 card.get("id_util", ""),
-                card.get("date_ajout", "")
+                card.get("date_ajout", ""),
+                card.get("der_connexion", "")
             ))
     except Exception:
         messagebox.showerror("Erreur",

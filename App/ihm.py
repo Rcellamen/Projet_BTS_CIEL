@@ -265,8 +265,7 @@ class App(ctk.CTk):
         """Affiche le tableau de bord avec les 3 panneaux de test matériel."""
         self._set_active_nav("dashboard")
         self._clear_content()
-        self._page_title("Tableau de bord",
-                         subtitle=f"Connecté à {RESEAU['IP']}:5000")
+        self._page_title("Tableau de bord")
 
         # Conteneur scrollable pour que tout tienne sur les petits écrans
         outer = ctk.CTkScrollableFrame(self.content, fg_color="transparent")
@@ -284,7 +283,7 @@ class App(ctk.CTk):
         ctk.CTkLabel(status_inner, text="●", font=("Segoe UI", 10),
                      text_color=SUCCESS).pack(side="left")
         ctk.CTkLabel(status_inner,
-            text=f"  Système opérationnel  —  Raspberry Pi {RESEAU['IP']}:5000",
+            text="  Système opérationnel  —  Raspberry Pi",
             font=FONT_UI, text_color=ACCENT).pack(side="left")
 
         # Voyant d'alarme (cercle de couleur + label)
@@ -319,7 +318,7 @@ class App(ctk.CTk):
             state="readonly", width=90, height=32
         ).pack(side="left", padx=(12, 24))
         ctk.CTkLabel(heure_inner,
-            text="Horaires de travail : 07h00 – 20h00 — hors plage → alarme",
+            text="Horaires de travail : 07h00 → 20h00 — hors plage → déclanchement de l'alarme",
             font=FONT_SMALL, text_color=TEXT_DIM).pack(side="left")
 
         # Titre section
@@ -353,7 +352,7 @@ class App(ctk.CTk):
                      text_color=TEXT_DIM).pack(anchor="w", padx=20, pady=(14, 2))
         self.mode_zone = ctk.StringVar(value="Accès Restreint")
         ctk.CTkComboBox(card, variable=self.mode_zone,
-            values=["Accès Libre", "Accès Restreint"],
+            values=["Zone Libre", "Zone Restreinte"],
             font=FONT_UI, fg_color=BG, text_color=TEXT,
             button_color=BORDER, button_hover_color=ACCENT_SOFT,
             border_color=BORDER, dropdown_fg_color=SURFACE,
@@ -361,7 +360,7 @@ class App(ctk.CTk):
             state="readonly", height=32
         ).pack(fill="x", padx=20)
 
-        # Zone de résultats (texte centré)
+        # Zone de résultats
         self.rfid_result = ctk.CTkFrame(card, fg_color=BG, corner_radius=7,
                                         border_width=1, border_color=BORDER)
         self.rfid_result.pack(fill="x", padx=20, pady=(14, 8))
@@ -550,7 +549,7 @@ class App(ctk.CTk):
         et affiche le statut « Accès Autorisé / Refusé » selon le mode choisi.
         Le scan étant bloquant côté API, l'appel est effectué dans un thread.
         """
-        mode = "libre" if self.mode_zone.get() == "Accès Libre" else "restreint"
+        mode = "libre" if self.mode_zone.get() == "Zone Libre" else "restreinte"
         self.rfid_badge_lbl.configure(text="N° badge : (lecture en cours…)")
         self.rfid_user_lbl.configure(text="Propriétaire : —")
         self.rfid_status_lbl.configure(text="Statut : …", text_color=TEXT_DIM)
@@ -603,15 +602,15 @@ class App(ctk.CTk):
             text=f"Propriétaire : {nom} {prenom}".strip())
 
         if autorise:
-            self.rfid_status_lbl.configure(text="✓ Accès Autorisé",
+            self.rfid_status_lbl.configure(text="✓ ",
                                            text_color=SUCCESS)
         else:
-            self.rfid_status_lbl.configure(text="✗ Accès Refusé",
+            self.rfid_status_lbl.configure(text="✗ ",
                                            text_color=DANGER)
 
         # Affiche le motif dans une infobulle simple (popup léger)
         if motif:
-            self.rfid_status_lbl.configure(text=f"{self.rfid_status_lbl.cget('text')}  ·  {motif}")
+            self.rfid_status_lbl.configure(text=f"{self.rfid_status_lbl.cget('text')} {motif}")
 
     # ── PIR : toggle, boucle de polling, affichage ──────────────────────────
 
@@ -851,7 +850,7 @@ class App(ctk.CTk):
         scroll.pack(side="right", fill="y", pady=2)
 
         self.arbre_carte = ttk.Treeview(wrap,
-            columns=("id", "texte", "id_util", "date_ajout"),
+            columns=("id", "texte", "id_util", "date_ajout", "der_connexion"),
             show="headings", style="Light.Treeview",
             yscrollcommand=scroll.set)
         scroll.config(command=self.arbre_carte.yview)
@@ -861,6 +860,7 @@ class App(ctk.CTk):
             ("texte",      "Texte",             100),
             ("id_util",    "ID Utilisateur",    20),
             ("date_ajout", "Date de création",  160),
+            ("der_connexion", "Dernier badgeage", 160)
         ]:
             self.arbre_carte.heading(col, text=label)
             self.arbre_carte.column(col, width=width, anchor="center")

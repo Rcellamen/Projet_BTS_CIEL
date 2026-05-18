@@ -138,8 +138,8 @@ def afficher_cartes():
         "id": carte.id_badge,
         "texte": carte.val_badge,
         "id_util": carte.id_utilisateur,
-        "derniere_connexion": carte.der_connexion,
-        "date_ajout": carte.date_ajout
+        "date_ajout": carte.date_ajout,
+        "der_connexion": carte.der_connexion
     } for carte in cartes]}, 201
 
 
@@ -296,26 +296,6 @@ def test_porte():
     return Lire_Porte()
 
 
-@app.route("/test_LB", methods=["GET"])
-def test_LB():
-    """Test simple du lecteur de badge : retourne id + dernière connexion."""
-    if _badge_lock.locked():
-        return {"Erreur": "Lecture déjà en cours"}, 429
-    try:
-        id_badge, text = Lire_Badge(False, timeout=30)
-    except Exception as e:
-        return {"Erreur": f"Lecture impossible : {e}"}, 500
-
-    if id_badge == -1:
-        return {"Erreur": "Aucun badge détecté (timeout)"}, 408
-
-    carte = Badge.query.filter_by(id_badge=id_badge).first()
-    if carte:
-        carte.der_connexion = datetime.now()
-        db.session.commit()
-    der = carte.der_connexion if carte else None
-    return {"id" : str(id_badge), "dernière connexion": der}, 200
-
 
 @app.route("/scanner_acces/<mode>", methods=["GET"])
 def scanner_acces(mode):
@@ -376,25 +356,32 @@ def scanner_acces(mode):
             "motif": "Badge non assigné à un utilisateur"
         }, 200
 
+    # Met à jour la date de dernière connexion
+    carte.der_connexion = datetime.now()
+    db.session.commit()
+
     # Cas 3 : badge connu + utilisateur trouvé → décision selon le mode
     mode = (mode or "").lower().strip()
     if mode == "libre":
         autorise = True
-        motif = "Droit AL - Accès autorisé"
+        motif = "Accès Libre - Accès autorisé"
     else:  # 'restreint' ou tout autre valeur par défaut
         autorise = util.droits.startswith("AT")
         motif = ("Droit AT - Accès autorisé" if autorise
-                 else "Accès refusé - Droits insuffisant")
+                 else "Droit AR - Accès refusé")
 
-    return {
-        "id_badge": str(id_badge),
-        "nom":      util.nom,
-        "prenom":   util.prenom,
-        "droits":   util.droits,
-        "autorise": autorise,
-        "motif":    motif
-    }, 200
+        return {
+            "id_badge": str(id_badge),
+            "nom":      util.nom,
+            "prenom":   util.prenom,
+            "droits":   util.droits,
+            "autorise": autorise,
+            "motif":    motif
+        }, 200
 
+    # Met à jour la date de dernière connexion
+    carte.der_connexion = datetime.now()
+    db.session.commit()
 
 @app.route("/kill_thread", methods=["POST"])
 def kill_thread():
