@@ -58,8 +58,6 @@ def Lire_Badge(lecture_continue, timeout=30):
     with _badge_lock:
         reader = SimpleMFRC522()
         try:
-            print(f"[RFID] En attente d'un badge (timeout {timeout}s)…")
-
             if lecture_continue:
                 # Mode debug : lit en boucle (utilisé manuellement, pas via API)
                 while True:
@@ -107,7 +105,7 @@ def Lire_PIR():
             "mouvement": bool(etat),
             "message": "Mouvement détecté" if etat else "Aucun mouvement"
         }), 200
-
+        time.sleep(5)
     except Exception as e:
         return ({
             "statut": "erreur",
@@ -132,8 +130,6 @@ def Lire_Porte():
 
         etat = GPIO.input(PORTE_PIN)
         ouverte = bool(etat)  # HIGH = porte ouverte (contact relâché)
-
-        print(f"{etat}")
         
         return ({
             "statut": "ok",
