@@ -5,7 +5,7 @@ polices et règles métier (horaires de travail).
 
 # ── Configuration réseau (modifiable depuis la fenêtre de connexion) ─────
 RESEAU = {
-    "IP": "172.20.10.2"
+    "IP": "192.168.4.1"
 }
 
 # ── Palette de couleurs ─────────────────────────────────────────────────
