@@ -39,12 +39,36 @@ def charger_util(self):
 
 
 def ajouter_util(self):
-    """Ouvre le formulaire de création d'un nouvel utilisateur."""
+    """
+    Ouvre le formulaire de création d'un nouvel utilisateur.
+
+    Le formulaire propose en plus un combobox listant les ID des cartes RFID
+    non encore attribuées (récupérées via /afficher_cartes_libres), pour
+    permettre d'assigner immédiatement une carte au nouvel utilisateur.
+    Sélectionner « Aucune » crée l'utilisateur sans carte.
+    """
+    # Récupère les cartes non assignées pour les proposer dans le formulaire
+    cartes_libres = ["Aucune"]
+    try:
+        reponse_libres = envoi_requete(RESEAU["IP"], port=5000,
+                                       endpoint="/afficher_cartes_libres")
+        parsed = json.loads(reponse_libres)
+        cartes_libres += [str(c["id"]) for c in parsed.get("cartes", [])]
+    except Exception:
+        # En cas d'erreur réseau, on conserve au moins « Aucune » dans le combo
+        pass
+
     def submit(data, win):
         """Envoie la création de l'utilisateur à l'API et rafraîchit la liste."""
-        reponse = envoi_requete(RESEAU["IP"], port=5000,
-                           endpoint="/ajouter_un_utilisateur", valeur=data)
-        messagebox.showinfo("Résultat", reponse, parent=win)
+        # Normalise la valeur "Aucune" en None pour le payload JSON
+        if data.get("id_badge") == "Aucune":
+            data["id_badge"] = None
+        try:
+            reponse = json.loads(envoi_requete(RESEAU["IP"], port=5000,
+                           endpoint="/ajouter_un_utilisateur", valeur=data))
+        except Exception as e:
+            reponse = {"Ajoute": reponse.get("Erreur", "")}
+        messagebox.showinfo("Resultat", reponse.get("Ajoute"), parent=win)
         win.destroy()
         charger_util(self)
 
@@ -52,8 +76,9 @@ def ajouter_util(self):
                 [
                     ("nom",    "Nom"),
                     ("prenom", "Prenom"),
-                    ("droits", "Droits", "combo",          # ← type
-                     ["-----", "AT (Accès total)", "AR (Accès restreint)"])
+                    ("droits", "Droits", "combo",
+                     ["-----", "AT (Accès total)", "AR (Accès restreint)"]),
+                    ("id_badge", "Carte (optionnelle)", "combo", cartes_libres),
                 ], submit)
 
 def modifier_util(self):
@@ -65,10 +90,13 @@ def modifier_util(self):
     prefill = {"id_util": vals[0], "nom": vals[1], "prenom": vals[2], "badges" : vals[3], "droits" : vals[4]}
     def submit(data, win):
         """Envoie la modification de l'utilisateur à l'API et rafraîchit la liste."""
-        reponse = envoi_requete(RESEAU["IP"], port=5000,
+        try:
+            reponse = json.loads(envoi_requete(RESEAU["IP"], port=5000,
                            endpoint=f"/modifier_un_utilisateur/{data['id_util']}",
-                           valeur=data)
-        messagebox.showinfo("Résultat", reponse, parent=win)
+                           valeur=data))
+        except Exception:
+            reponse = {"Modifie": reponse.get("Erreur", "")}
+        messagebox.showinfo("Résultat", reponse.get("Modifie", ""))
         win.destroy()
         charger_util(self)
         
@@ -91,9 +119,12 @@ def supprimer_util(self):
     id_util = self.arbre_util.item(sel[0], "values")[0]
     if not messagebox.askyesno("Confirmer", f"Supprimer l'utilisateur {id_util} ?"):
         return
-    reponse = envoi_requete(RESEAU["IP"], port=5000,
-                       endpoint=f"/supprimer_un_utilisateur/{id_util}")
-    messagebox.showinfo("Résultat", reponse)
+    try:
+        reponse = json.loads(envoi_requete(RESEAU["IP"], port=5000,
+                       endpoint=f"/supprimer_un_utilisateur/{id_util}"))
+    except Exception:
+        reponse = {"Efface": reponse.get("Erreur", "")}
+    messagebox.showinfo("Résultat", reponse.get("Efface", ""))
     charger_util(self)
 
 
@@ -103,8 +134,12 @@ def ajouter_carte_util(self):
     if not sel:
         return
     id_util = self.arbre_util.item(sel[0], "values")[0]
-    reponse = envoi_requete(RESEAU["IP"], port=5000, endpoint=f"/ajouter_une_carte_a_util/{id_util}")
-    messagebox.showinfo("Résultat", reponse)
+    try: 
+        reponse = json.loads(envoi_requete(RESEAU["IP"], port=5000, 
+                                              endpoint=f"/ajouter_une_carte_a_util/{id_util}"))
+    except Exception:
+        reponse = {"Modifie" : reponse.get("Erreur", "")}
+    messagebox.showinfo("Résultat", reponse.get("Modifie", ""))
     charger_util(self)
 
 

@@ -24,7 +24,6 @@ def charger_carte(self):
         self.donnee_cartes = parsed.get("cartes", parsed) if isinstance(parsed, dict) else parsed
         self.arbre_carte.delete(*self.arbre_carte.get_children())
         for card in self.donnee_cartes:
-            print(card)
             self.arbre_carte.insert("", "end", values=(
                 card.get("id", ""),
                 card.get("texte", ""),
@@ -45,11 +44,13 @@ def modifier_carte(self):
     vals = self.arbre_carte.item(sel[0], "values")
     prefill = {"id_badge": vals[0], "texte": vals[1], "id_util": vals[2]}
     def submit(data, win):
-        """Envoie la modification de la carte à l'API et rafraîchit la liste."""
-        reponse = envoi_requete(RESEAU["IP"], port=5000,
-                           endpoint=f"/modifier_une_carte/{data['id_badge']}",
-                           valeur=data)
-        messagebox.showinfo("Résultat", reponse, parent=win)
+        """Envoie la modification de la carte à l'API et rafraîchit la liste."""     
+        try:
+            reponse = json.loads(envoi_requete(RESEAU["IP"], port=5000,
+                    endpoint=f"/modifier_une_carte/{data['id_badge']}",valeur=data))
+        except Exception:
+            reponse = {"Efface" : reponse.get("Erreur", "")} 
+        messagebox.showinfo("Résultat", reponse.get("Efface", ""), parent=win)
         win.destroy()
         charger_carte(self)
 
@@ -65,9 +66,12 @@ def supprimer_carte(self):
     id_carte = self.arbre_carte.item(sel[0], "values")[0]
     if not messagebox.askyesno("Confirmer", f"Supprimer la carte {id_carte} ?"):
         return
-    reponse = envoi_requete(RESEAU["IP"], port=5000,
-                       endpoint=f"/supprimer_une_carte/{id_carte}")
-    messagebox.showinfo("Résultat", reponse)
+    try:
+        reponse = json.loads(envoi_requete(RESEAU["IP"], port=5000,
+            endpoint=f"/supprimer_une_carte/{id_carte}"))
+    except Exception:
+        reponse = {"Efface": reponse.get("Erreur", "")}
+    messagebox.showinfo("Résultat", reponse.get("Efface", ""))
     charger_carte(self)
 
 def fenetre_scan_carte(self, on_card_scanned=None):
