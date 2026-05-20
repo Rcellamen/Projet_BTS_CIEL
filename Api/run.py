@@ -40,7 +40,7 @@ def ajouter_une_carte():
         )
         db.session.add(carte)
         db.session.commit()
-        return {"Ajouté": "La carte a bien été ajoutée"}, 201
+        return {"Ajoute": "La carte a bien été ajoutée"}, 201
     else:
         return {"Erreur": "La carte existe déjà"}, 404
 
@@ -84,7 +84,7 @@ def creer_et_assigner_carte():
     )
     db.session.add(carte)
     db.session.commit()
-    return {"Ajouté": "Carte créée et assignée à l'utilisateur"}, 201
+    return {"Ajoute": "Carte créée et assignée à l'utilisateur"}, 201
 
 
 @app.route("/modifier_une_carte/<id_badge>", methods=["GET", "POST"])
@@ -126,7 +126,7 @@ def supprimer_une_carte(id_badge):
     if carte:
         db.session.delete(carte)
         db.session.commit()
-        return {"Effacé" : "La carte à bien été supprimé"}, 201
+        return {"Efface" : "La carte à bien été supprimé"}, 201
     return {"Erreur" : "Erreur"}, 404
 
 
@@ -150,9 +150,18 @@ def afficher_cartes():
 @app.route("/ajouter_un_utilisateur", methods=["POST"])
 def ajouter_un_utilisateur():
     """
-    Crée un nouvel utilisateur en base.
+    Crée un nouvel utilisateur en base, et lui assigne optionnellement
+    une carte RFID existante (parmi celles non encore attribuées).
 
-    Attend un JSON : {"nom": str, "prenom": str, "droits": str}.
+    Attend un JSON :
+        {
+            "nom":      str,
+            "prenom":   str,
+            "droits":   str,
+            "id_badge": int | str | None | "Aucune"
+        }
+
+    Retourne {"Ajoute": ..., "id_util": int} en 201.
     """
     data = request.get_json()
     util = Utilisateur(
@@ -162,7 +171,34 @@ def ajouter_un_utilisateur():
     )
     db.session.add(util)
     db.session.commit()
-    return {"Ajouté": "L'utilisateur a bien été ajouté"}, 201
+
+    # Assignation optionnelle d'une carte au nouvel utilisateur
+    id_badge = data.get('id_badge')
+    message = "L'utilisateur a bien été ajouté"
+    if id_badge not in (None, "", "Aucune", "None"):
+        try:
+            badge = Badge.query.filter_by(id_badge=int(id_badge)).first()
+            if badge and badge.id_utilisateur is None:
+                badge.id_utilisateur = util.id_util
+                db.session.commit()
+                message += f" et la carte {id_badge} lui a été assignée"
+        except (ValueError, TypeError):
+            pass
+
+    return {"Ajoute": message, "id_util": util.id_util}, 201
+
+
+@app.route("/afficher_cartes_libres", methods=["GET"])
+def afficher_cartes_libres():
+    """
+    Retourne la liste des cartes RFID non encore attribuées à un utilisateur.
+    Utilisée par l'IHM pour peupler le combobox du formulaire d'ajout d'utilisateur.
+    """
+    cartes = Badge.query.filter_by(id_utilisateur=None).all()
+    return {"cartes": [
+        {"id": carte.id_badge, "texte": carte.val_badge}
+        for carte in cartes
+    ]}, 200
 
 
 @app.route("/modifier_un_utilisateur/<id_util>", methods=["GET", "POST"])
@@ -194,9 +230,9 @@ def modifier_un_utilisateur(id_util):
         if "droits" in data:
             util.droits = data["droits"]
         db.session.commit()
-        return {"Utilisateur": "La modification a été effectuée"}, 200
+        return {"Modifie": "La modification a été effectuée"}, 200
 
-    return {"error": "L'utilisateur n'existe pas"}, 404
+    return {"Erreur": "L'utilisateur n'existe pas"}, 404
 
 
 @app.route("/supprimer_un_utilisateur/<id_util>", methods=["GET"])
@@ -206,7 +242,7 @@ def supprimer_un_utilisateur(id_util):
     if util:
         db.session.delete(util)
         db.session.commit()
-        return {"Effacé": "L'utilisateur à bien été supprimé"}, 201
+        return {"Efface": "L'utilisateur à bien été supprimé"}, 201
     return {"Erreur" : "Erreur"}, 404
 
 
@@ -231,7 +267,7 @@ def ajouter_une_carte_a_util(id_util):
 
     badge.id_utilisateur = id_util
     db.session.commit()
-    return {"Modifié": f"Badge {id_badge} assigné à l'utilisateur {id_util}"}, 200
+    return {"Modifie": f"Le badge {id_badge} à bien été assigné à l'utilisateur {id_util}"}, 200
 
 
 @app.route("/afficher_utilisateurs", methods=["GET"])
