@@ -1,0 +1,8 @@
+Ce projet à été pensé dans le cadre d'un contrat impliquant le remplacement complet du système de sûreté (contrôle d'accès, système d'intrusion, vidéo surveillance) d'un client. 
+Il concerne une maquette de démonstration qui reproduira un système de sûreté. Elle permettra de pouvoir montrer au client comment fonctionne ce système d'une manière simplifiée. Cette maquette sera composé d'un Raspberry PI auquel 
+sera connecté plusieurs capteurs reproduisant un système de sûreté (capteur RFID, capteur PIR et un détecteur d'ouverture). Pour contrôler ce système,  une IHM sera développée en Python et permettra d'interagir avec les différents capteurs.
+Un script, lui aussi en python, récupèrera toutes les informations des capteurs et enverra les données du capteur RFID dans une base de donnée SQLite. Suite à ça l'IHM viendra récupérer les informations compris dans la base de donnée 
+ainsi que les informations des autres capteurs grâce à des requêtes envoyées un api REST Flask. Cette IHM sera composée de trois parties, une qui servira de tableau de bord et sur laquelle on pourra tester les différents capteurs avec une
+simulation de détection d'intrusion (horaires de travail simulée + alarme fictive activée dans le cas d'une détection d'intrusion hors horaire de travail), une partie permettant d'accéder à la liste des cartes enregistrées dans la base de
+données (avec la possibilité de créer, modifier et supprimer des cartes) et enfin une dernière partie dans laquelle on aura la possibilité de voir tous les utilisateurs enregistrés dans la base de données (avec ici aussi la possibilité de
+créer, modifier et supprimer un utilisateur mais avec une fonctionnalité en plus permettant d'attribuer une carte à un utilisateur en la scannant).
