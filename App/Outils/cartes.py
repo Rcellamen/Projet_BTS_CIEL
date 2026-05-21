@@ -42,21 +42,21 @@ def modifier_carte(self):
     if not sel:
         return
     vals = self.arbre_carte.item(sel[0], "values")
-    prefill = {"id_badge": vals[0], "texte": vals[1], "id_util": vals[2]}
-    def submit(data, win):
-        """Envoie la modification de la carte à l'API et rafraîchit la liste."""     
+    prerempli = {"id_badge": vals[0], "texte": vals[1], "id_util": vals[2]}
+    def valider(data, win):
+        """Envoie la modification de la carte à l'API et rafraîchit la liste."""
         try:
             reponse = json.loads(envoi_requete(RESEAU["IP"], port=5000,
                     endpoint=f"/modifier_une_carte/{data['id_badge']}",valeur=data))
         except Exception:
-            reponse = {"Efface" : reponse.get("Erreur", "")} 
+            reponse = {"Efface" : reponse.get("Erreur", "")}
         messagebox.showinfo("Résultat", reponse.get("Efface", ""), parent=win)
         win.destroy()
         charger_carte(self)
 
-    self._modal("Modifier une carte",
+    self._modale("Modifier une carte",
                 [("id_badge", "ID Badge"), ("texte", "Texte"),
-                 ("id_util", "ID Utilisateur")], submit, prefill=prefill)
+                 ("id_util", "ID Utilisateur")], valider, prerempli=prerempli)
     
 def supprimer_carte(self):
     """Supprime la carte sélectionnée après confirmation de l'utilisateur."""
@@ -74,12 +74,12 @@ def supprimer_carte(self):
     messagebox.showinfo("Résultat", reponse.get("Efface", ""))
     charger_carte(self)
 
-def fenetre_scan_carte(self, on_card_scanned=None):
+def fenetre_scan_carte(self, quand_carte_scannee=None):
         """
         Ouvre une fenêtre 'Scanner une carte' qui interroge l'API en arrière-plan
-        et appelle `on_card_scanned(id_badge)` dès qu'un badge est lu.
+        et appelle `quand_carte_scannee(id_badge)` dès qu'un badge est lu.
 
-        :param on_card_scanned: callback recevant l'id de la carte scannée.
+        :param quand_carte_scannee: rappel recevant l'id de la carte scannée.
         """
         win = tkinter.Toplevel(self)
         win.title("Scanner une carte")
@@ -98,7 +98,7 @@ def fenetre_scan_carte(self, on_card_scanned=None):
         tkinter.Label(body, textvariable=status_var,
                     bg=BG, fg=TEXT_DIM, font=FONT_SMALL).pack(pady=(0, 10))
 
-        cancelled = [False]  # flag mutable accessible dans le thread
+        annule = [False]  # flag mutable accessible dans le thread
 
         def annuler():
             """
@@ -106,9 +106,9 @@ def fenetre_scan_carte(self, on_card_scanned=None):
             Tente aussi de libérer le verrou côté API (au cas où une lecture
             précédente serait restée bloquée), pour ne pas bloquer la suivante.
             """
-            cancelled[0] = True
+            annule[0] = True
             try:
-                requests.post(f"http://{RESEAU['IP']}:5000/kill_thread", timeout=2)
+                requests.post(f"http://{RESEAU['IP']}:5000/liberer_verrou", timeout=2)
             except Exception:
                 pass
             win.destroy()
@@ -127,7 +127,7 @@ def fenetre_scan_carte(self, on_card_scanned=None):
         y = self.winfo_y() + (self.winfo_height() - win.winfo_height()) // 2
         win.geometry(f"+{x}+{y}")
 
-        def lire_badge_thread():
+        def tache_lecture_badge():
             """
             Thread d'arrière-plan qui interroge `/lire_badge` puis remet
             la main au thread Tkinter pour la mise à jour visuelle.
@@ -144,17 +144,17 @@ def fenetre_scan_carte(self, on_card_scanned=None):
             except Exception as e:
                 erreur = str(e)
 
-            if cancelled[0]:
+            if annule[0]:
                 return
 
-            def callback():
+            def rappel():
                 """Met à jour la fenêtre dans le thread principal Tkinter."""
                 if not win.winfo_exists():
                     return
                 if result and "id" in result and result["id"] not in (None, "-1", -1):
                     win.destroy()
-                    if on_card_scanned:
-                        on_card_scanned(result["id"])
+                    if quand_carte_scannee:
+                        quand_carte_scannee(result["id"])
                 elif result and "Erreur" in result:
                     # Cas typique : verrou bloqué (HTTP 429)
                     status_var.set(
@@ -166,6 +166,6 @@ def fenetre_scan_carte(self, on_card_scanned=None):
                         f"Échec de la lecture : {erreur or 'aucun badge détecté'}."
                     )
 
-            win.after(0, callback)
-        threading.Thread(target=lire_badge_thread, daemon=True).start()
+            win.after(0, rappel)
+        threading.Thread(target=tache_lecture_badge, daemon=True).start()
 

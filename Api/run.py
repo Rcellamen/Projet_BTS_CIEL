@@ -406,21 +406,17 @@ def scanner_acces(mode):
         motif = ("Droit AT - Accès autorisé" if autorise
                  else "Droit AR - Accès refusé")
 
-        return {
-            "id_badge": str(id_badge),
-            "nom":      util.nom,
-            "prenom":   util.prenom,
-            "droits":   util.droits,
-            "autorise": autorise,
-            "motif":    motif
-        }, 200
+    return {
+        "id_badge": str(id_badge),
+        "nom":      util.nom,
+        "prenom":   util.prenom,
+        "droits":   util.droits,
+        "autorise": autorise,
+        "motif":    motif
+    }, 200
 
-    # Met à jour la date de dernière connexion
-    carte.der_connexion = datetime.now()
-    db.session.commit()
-
-@app.route("/kill_thread", methods=["POST"])
-def kill_thread():
+@app.route("/liberer_verrou", methods=["POST"])
+def liberer_verrou():
     """Tente de relâcher le verrou du lecteur de badge (debug)."""
     try:
         _badge_lock.release()

@@ -26,7 +26,7 @@ PORTE_PIN = 27      # Contact d'ouverture de porte (entrée, pull-up interne)
 _badge_lock = threading.Lock()
 
 
-def _init_gpio():
+def _initialiser_gpio():
     """
     Initialise le mode GPIO et configure toutes les broches utilisées par
     les capteurs (PIR, détecteur de porte, LED). Idempotente : peut être
@@ -96,7 +96,7 @@ def Lire_PIR():
         - {"statut": "erreur", "message": str} en cas d'exception
     """
     try:
-        _init_gpio()
+        _initialiser_gpio()
 
         etat = GPIO.input(PIR_PIN)
 
@@ -126,7 +126,7 @@ def Lire_Porte():
         - {"statut": "erreur", "message": str} en cas d'exception
     """
     try:
-        _init_gpio()
+        _initialiser_gpio()
 
         etat = GPIO.input(PORTE_PIN)
         ouverte = bool(etat)  # HIGH = porte ouverte (contact relâché)

@@ -58,7 +58,7 @@ def ajouter_util(self):
         # En cas d'erreur réseau, on conserve au moins « Aucune » dans le combo
         pass
 
-    def submit(data, win):
+    def valider(data, win):
         """Envoie la création de l'utilisateur à l'API et rafraîchit la liste."""
         # Normalise la valeur "Aucune" en None pour le payload JSON
         if data.get("id_badge") == "Aucune":
@@ -72,14 +72,14 @@ def ajouter_util(self):
         win.destroy()
         charger_util(self)
 
-    self._modal("Ajouter un utilisateur",
+    self._modale("Ajouter un utilisateur",
                 [
                     ("nom",    "Nom"),
                     ("prenom", "Prenom"),
                     ("droits", "Droits", "combo",
                      ["-----", "AT (Accès total)", "AR (Accès restreint)"]),
                     ("id_badge", "Carte (optionnelle)", "combo", cartes_libres),
-                ], submit)
+                ], valider)
 
 def modifier_util(self):
     """Ouvre le formulaire de modification de l'utilisateur sélectionnée dans le tableau."""
@@ -87,8 +87,8 @@ def modifier_util(self):
     if not sel:
         return
     vals = self.arbre_util.item(sel[0], "values")
-    prefill = {"id_util": vals[0], "nom": vals[1], "prenom": vals[2], "badges" : vals[3], "droits" : vals[4]}
-    def submit(data, win):
+    prerempli = {"id_util": vals[0], "nom": vals[1], "prenom": vals[2], "badges" : vals[3], "droits" : vals[4]}
+    def valider(data, win):
         """Envoie la modification de l'utilisateur à l'API et rafraîchit la liste."""
         try:
             reponse = json.loads(envoi_requete(RESEAU["IP"], port=5000,
@@ -99,8 +99,8 @@ def modifier_util(self):
         messagebox.showinfo("Résultat", reponse.get("Modifie", ""))
         win.destroy()
         charger_util(self)
-        
-    self._modal("Modifier un utilisateur",
+
+    self._modale("Modifier un utilisateur",
                 [("id_util", "ID Utilisateur"),
                  ("nom", "Nom"),
                  ("prenom", "Prenom"),
@@ -108,7 +108,7 @@ def modifier_util(self):
                  ("droits", "Droits", "combo",
                  ["-----", "AT (Accès total)", "AR (Accès restreint)"])
                  ],
-                 submit, prefill=prefill
+                 valider, prerempli=prerempli
                  )
     
 def supprimer_util(self):
@@ -143,14 +143,14 @@ def ajouter_carte_util(self):
     charger_util(self)
 
 
-def fenetre_scan_util(self, on_card_scanned=None):
+def fenetre_scan_util(self, quand_carte_scannee=None):
         """
         Ouvre la fenêtre 'Scanner une carte' utilisée dans le flux d'assignation
-        d'un badge à un utilisateur. Le callback `on_card_scanned` reçoit
+        d'un badge à un utilisateur. Le rappel `quand_carte_scannee` reçoit
         l'id de la carte lue ; il est ensuite responsable de vérifier si la carte
         existe en base et d'enchaîner avec la modale appropriée.
 
-        :param on_card_scanned: callback recevant l'id de la carte scannée.
+        :param quand_carte_scannee: rappel recevant l'id de la carte scannée.
         """
         win = tkinter.Toplevel(self)
         win.title("Scanner une carte")
@@ -169,7 +169,7 @@ def fenetre_scan_util(self, on_card_scanned=None):
         tkinter.Label(body, textvariable=status_var,
                     bg=BG, fg=TEXT_DIM, font=FONT_SMALL).pack(pady=(0, 10))
 
-        cancelled = [False]  # flag mutable accessible dans le thread
+        annule = [False]  # flag mutable accessible dans le thread
 
         def annuler():
             """
@@ -177,9 +177,9 @@ def fenetre_scan_util(self, on_card_scanned=None):
             Tente aussi de libérer le verrou côté API pour ne pas bloquer
             les futures lectures.
             """
-            cancelled[0] = True
+            annule[0] = True
             try:
-                requests.post(f"http://{RESEAU['IP']}:5000/kill_thread", timeout=2)
+                requests.post(f"http://{RESEAU['IP']}:5000/liberer_verrou", timeout=2)
             except Exception:
                 pass
             win.destroy()
@@ -198,7 +198,7 @@ def fenetre_scan_util(self, on_card_scanned=None):
         y = self.winfo_y() + (self.winfo_height() - win.winfo_height()) // 2
         win.geometry(f"+{x}+{y}")
 
-        def lire_badge_thread():
+        def tache_lecture_badge():
             """Thread d'arrière-plan : appelle `/lire_badge` puis remet la
             main au thread Tkinter via `win.after`. Détaille la cause de l'échec."""
             result = None
@@ -212,17 +212,17 @@ def fenetre_scan_util(self, on_card_scanned=None):
             except Exception as e:
                 erreur = str(e)
 
-            if cancelled[0]:
+            if annule[0]:
                 return
 
-            def callback():
+            def rappel():
                 """Met à jour la fenêtre dans le thread principal Tkinter."""
                 if not win.winfo_exists():
                     return
                 if result and "id" in result and result["id"] not in (None, "-1", -1):
                     win.destroy()
-                    if on_card_scanned:
-                        on_card_scanned(result["id"])
+                    if quand_carte_scannee:
+                        quand_carte_scannee(result["id"])
                 elif result and "Erreur" in result:
                     status_var.set(
                         f"Échec : {result['Erreur']}.\n"
@@ -233,5 +233,5 @@ def fenetre_scan_util(self, on_card_scanned=None):
                         f"Échec de la lecture : {erreur or 'aucun badge détecté'}."
                     )
 
-            win.after(0, callback)
-        threading.Thread(target=lire_badge_thread, daemon=True).start()
+            win.after(0, rappel)
+        threading.Thread(target=tache_lecture_badge, daemon=True).start()
