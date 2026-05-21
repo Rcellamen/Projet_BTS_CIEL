@@ -14,8 +14,8 @@ import json
 import requests
 import threading
 
-from src.App.Outils.requete_api import envoi_requete
-from src.App.Outils.parametres import *
+from src.app.Outils.requete_api import envoi_requete
+from src.app.Outils.parametres import *
 
 def charger_util(self):
     """Récupère la liste des utilisateurs depuis l'API et remplit le tableau."""
