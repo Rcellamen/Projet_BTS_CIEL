@@ -220,7 +220,7 @@ class TestLibererVerrou:
 
     def test_liberer_libere_le_verrou(self, client):
         """Si le verrou est pris, liberer_verrou doit le libérer."""
-        from Api.run import _badge_lock
+        from src.Api.run import _badge_lock
         _badge_lock.acquire()
         assert _badge_lock.locked() is True
         resp = client.post('/liberer_verrou')

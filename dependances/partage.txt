@@ -1,0 +1,2 @@
+#Dépendances communes aux deux dossiers
+pytest==9.0.3

@@ -7,7 +7,7 @@ peut soit ne jamais se déclencher, soit hurler en pleine journée.
 """
 
 import pytest
-from App.Outils.parametres import (
+from src.App.Outils.parametres import (
     hors_horaires,
     HEURE_DEBUT_TRAVAIL,
     HEURE_FIN_TRAVAIL,

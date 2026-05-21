@@ -1,4 +1,4 @@
-from db import db
+from src.Api.db import db
 
 
 class Badge(db.Model):

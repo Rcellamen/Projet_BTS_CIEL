@@ -1,0 +1,5 @@
+#Dépendances propre à l'api
+RPi.GPIO==0.7.1
+mfrc522==0.0.9
+Flask==3.1.2
+Flask-SQLAlchemy==3.1.1

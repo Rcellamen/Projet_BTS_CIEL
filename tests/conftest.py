@@ -33,15 +33,15 @@ for p in (API_PATH, APP_PATH):
         sys.path.insert(0, p)
 
 # ── 3) Override URI SQLite vers une BDD en mémoire ───────────────────────
-from Api.config import config  # noqa: E402  (import après modification sys.path : voulu)
+from src.Api.config import config  # noqa: E402  (import après modification sys.path : voulu)
 config.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 config.app.config['TESTING'] = True
 
 # ── 4) Imports des modules applicatifs (après la reconfig) ───────────────
 import pytest                       # noqa: E402
-from Api.db import db                   # noqa: E402
-import Api.model                        # noqa: E402  (enregistre les tables)
-import Api.run                       # noqa: E402  (enregistre les routes Flask)
+from src.Api.db import db                   # noqa: E402
+import src.Api.model                        # noqa: E402  (enregistre les tables)
+import src.Api.run                       # noqa: E402  (enregistre les routes Flask)
 
 
 @pytest.fixture

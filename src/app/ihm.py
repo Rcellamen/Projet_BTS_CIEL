@@ -13,9 +13,9 @@ from tkinter import messagebox, ttk
 import requests
 import customtkinter as ctk
 
-from Outils.cartes import *
-from Outils.utilisateurs import *
-from Outils.parametres import hors_horaires, ALARME_ON, ALARME_OFF, SUCCESS, WARNING, FONT_BIG
+from src.App.Outils.cartes import *
+from src.App.Outils.utilisateurs import *
+from src.App.Outils.parametres import hors_horaires, ALARME_ON, ALARME_OFF, SUCCESS, WARNING, FONT_BIG
 
 # ── Thème global customTkinter ──────────────────────────────────────────────
 ctk.set_appearance_mode("light")

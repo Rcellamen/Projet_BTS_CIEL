@@ -12,8 +12,8 @@ import json
 import threading
 import requests
 
-from Outils.requete_api import envoi_requete
-from Outils.parametres import *
+from src.App.Outils.requete_api import envoi_requete
+from src.App.Outils.parametres import *
 
 
 def charger_carte(self):
