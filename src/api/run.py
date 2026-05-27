@@ -7,12 +7,12 @@ Expose les routes REST permettant à l'IHM (CustomTkinter) de :
     - Évaluer les droits d'accès (Accès Libre / Accès Restreint)
 """
 
-from src.Api.db import db
-from src.Api.model import Badge, Utilisateur
+from src.api.db import db
+from src.api.model import Badge, Utilisateur
 from datetime import datetime
-from src.Api.config import app
+from src.api.config import app
 from flask import request
-from src.Api.capteur import Lire_PIR, Lire_Badge, Lire_Porte, _badge_lock
+from src.api.capteur import Lire_PIR, Lire_Badge, Lire_Porte, _badge_lock
 
 
 # ────────────────────────────────────────────────────────────────────────

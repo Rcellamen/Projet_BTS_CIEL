@@ -1,4 +1,4 @@
-from src.Api.config import app
+from src.api.config import app
 from flask_sqlalchemy import SQLAlchemy
 
 
